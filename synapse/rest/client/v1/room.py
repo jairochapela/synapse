@@ -435,7 +435,7 @@ class RoomMessageListRestServlet(ClientV1RestServlet):
         pagination_config = PaginationConfig.from_request(
             request, default_limit=10,
         )
-        as_client_event = "raw" not in request.args
+        as_client_event = b"raw" not in request.args
         filter_bytes = parse_string(request, "filter")
         if filter_bytes:
             filter_json = urlparse.unquote(filter_bytes).decode("UTF-8")

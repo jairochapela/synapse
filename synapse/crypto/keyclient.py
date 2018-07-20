@@ -48,7 +48,7 @@ def fetch_server_key(server_name, ssl_context_factory, path=KEY_API_V1):
                 defer.returnValue((server_response, server_certificate))
         except SynapseKeyClientError as e:
             logger.exception("Error getting key for %r" % (server_name,))
-            if e.status.startswith("4"):
+            if e.status.startswith(b"4"):
                 # Don't retry for 4xx responses.
                 raise IOError("Cannot get key for %r" % server_name)
         except Exception as e:
@@ -78,9 +78,9 @@ class SynapseKeyClientProtocol(HTTPClient):
         self._peer = self.transport.getPeer()
         logger.debug("Connected to %s", self._peer)
 
-        self.sendCommand(b"GET", self.path)
+        self.sendCommand(b"GET", self.path.encode('ascii'))
         if self.host:
-            self.sendHeader(b"Host", self.host)
+            self.sendHeader(b"Host", self.host.encode('ascii'))
         self.endHeaders()
         self.timer = reactor.callLater(
             self.timeout,

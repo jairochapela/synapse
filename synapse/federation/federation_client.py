@@ -264,10 +264,10 @@ class FederationClient(FederationBase):
                     event_id, destination, e,
                 )
             except NotRetryingDestination as e:
-                logger.info(e.message)
+                logger.info(e.args[0])
                 continue
             except FederationDeniedError as e:
-                logger.info(e.message)
+                logger.info(e.args[0])
                 continue
             except Exception as e:
                 pdu_attempts[destination] = now
@@ -525,12 +525,12 @@ class FederationClient(FederationBase):
                 else:
                     logger.warn(
                         "Failed to make_%s via %s: %s",
-                        membership, destination, e.message
+                        membership, destination, e.args[0]
                     )
             except Exception as e:
                 logger.warn(
                     "Failed to make_%s via %s: %s",
-                    membership, destination, e.message
+                    membership, destination, e.args[0]
                 )
 
         raise RuntimeError("Failed to send to any server.")
@@ -630,12 +630,12 @@ class FederationClient(FederationBase):
                 else:
                     logger.exception(
                         "Failed to send_join via %s: %s",
-                        destination, e.message
+                        destination, e.args[0]
                     )
             except Exception as e:
                 logger.exception(
                     "Failed to send_join via %s: %s",
-                    destination, e.message
+                    destination, e.args[0]
                 )
 
         raise RuntimeError("Failed to send to any server.")
@@ -705,7 +705,7 @@ class FederationClient(FederationBase):
             except Exception as e:
                 logger.exception(
                     "Failed to send_leave via %s: %s",
-                    destination, e.message
+                    destination, e.args[0]
                 )
 
         raise RuntimeError("Failed to send to any server.")
@@ -827,7 +827,7 @@ class FederationClient(FederationBase):
             except Exception as e:
                 logger.exception(
                     "Failed to send_third_party_invite via %s: %s",
-                    destination, e.message
+                    destination, e.args[0]
                 )
 
         raise RuntimeError("Failed to send to any server.")

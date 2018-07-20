@@ -16,7 +16,8 @@
 
 import hashlib
 import logging
-import urllib
+
+from six.moves import urllib
 from collections import namedtuple
 
 from signedjson.key import (
@@ -513,9 +514,9 @@ class Keyring(object):
 
             (response, tls_certificate) = yield fetch_server_key(
                 server_name, self.hs.tls_server_context_factory,
-                path=(b"/_matrix/key/v2/server/%s" % (
-                    urllib.quote(requested_key_id),
-                )).encode("ascii"),
+                path=("/_matrix/key/v2/server/%s" % (
+                    urllib.parse.quote(requested_key_id),
+                )),
             )
 
             if (u"signatures" not in response

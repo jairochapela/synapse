@@ -89,7 +89,7 @@ class SynapseRequest(Request):
             "%s - %s - Received request: %s %s",
             self.getClientIP(),
             self.site.site_tag,
-            self.method,
+            self.method.decode('ascii'),
             self.get_redacted_uri()
         )
 
@@ -105,7 +105,7 @@ class SynapseRequest(Request):
         # need to decode as it could be raw utf-8 bytes
         # from a IDN servname in an auth header
         authenticated_entity = self.authenticated_entity
-        if authenticated_entity is not None:
+        if authenticated_entity is not None and isinstance(authenticated_entity, bytes):
             authenticated_entity = authenticated_entity.decode("utf-8", "replace")
 
         # ...or could be raw utf-8 bytes in the User-Agent header.
@@ -132,7 +132,7 @@ class SynapseRequest(Request):
             int(usage.db_txn_count),
             self.sentLength,
             self.code,
-            self.method,
+            self.method.decode('ascii'),
             self.get_redacted_uri(),
             self.clientproto,
             user_agent,
@@ -217,7 +217,7 @@ class SynapseSite(Site):
         proxied = config.get("x_forwarded", False)
         self.requestFactory = SynapseRequestFactory(self, proxied)
         self.access_logger = logging.getLogger(logger_name)
-        self.server_version_string = server_version_string
+        self.server_version_string = server_version_string.encode('ascii')
 
     def log(self, request):
         pass

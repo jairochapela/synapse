@@ -126,7 +126,7 @@ class PushersSetRestServlet(ClientV1RestServlet):
                 profile_tag=content.get('profile_tag', ""),
             )
         except PusherConfigException as pce:
-            raise SynapseError(400, "Config Error: " + pce.message,
+            raise SynapseError(400, "Config Error: " + pce.args[0],
                                errcode=Codes.MISSING_PARAM)
 
         self.notifier.on_new_replication_data()

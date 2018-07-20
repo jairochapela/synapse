@@ -35,6 +35,11 @@ def parse_media_id(request):
         # This allows users to append e.g. /test.png to the URL. Useful for
         # clients that parse the URL to see content type.
         server_name, media_id = request.postpath[:2]
+
+        if isinstance(server_name, bytes):
+            server_name = server_name.decode('utf-8')
+            media_id = media_id.decode('utf8')
+
         file_name = None
         if len(request.postpath) > 2:
             try:
