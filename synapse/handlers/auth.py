@@ -15,6 +15,7 @@
 # limitations under the License.
 
 import logging
+import unicodedata
 
 import attr
 import bcrypt
@@ -855,8 +856,16 @@ class AuthHandler(BaseHandler):
             Deferred(str): Hashed password.
         """
         def _do_hash():
-            return bcrypt.hashpw(password.encode('utf8') + self.hs.config.password_pepper,
-                                 bcrypt.gensalt(self.bcrypt_rounds))
+            # Ensure that we normalise the password
+            if isinstance(password, bytes):
+                pw = unicodedata.normalize("NFKC", password.decode('utf8'))
+            else:
+                pw = unicodedata.normalize("NFKC", password)
+
+            return bcrypt.hashpw(
+                pw.encode('utf8') + self.hs.config.password_pepper.encode("utf8"),
+                bcrypt.gensalt(self.bcrypt_rounds),
+            )
 
         return make_deferred_yieldable(
             threads.deferToThreadPool(
@@ -876,8 +885,12 @@ class AuthHandler(BaseHandler):
         """
 
         def _do_validate_hash():
+            if isinstance(password, bytes):
+                pw = unicodedata.normalize("NFKC", password.decode('utf8'))
+            else:
+                pw = unicodedata.normalize("NFKC", password)
             return bcrypt.checkpw(
-                password.encode('utf8') + self.hs.config.password_pepper,
+                pw.encode('utf8') + self.hs.config.password_pepper.encode("utf8"),
                 stored_hash.encode('utf8')
             )
 
