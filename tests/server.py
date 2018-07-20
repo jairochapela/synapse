@@ -79,10 +79,12 @@ def make_request(method, path, content=b""):
     Make a web request using the given method and path, feed it the
     content, and return the Request and the Channel underneath.
     """
+    if isinstance(path, bytes):
+        path = path.decode('ascii')
 
     # Decorate it to be the full path
-    if not path.startswith(b"/_matrix"):
-        path = b"/_matrix/client/r0/" + path
+    if not path.startswith("/_matrix"):
+        path = "/_matrix/client/r0/" + path
         path = path.replace("//", "/")
 
     if isinstance(content, text_type):
