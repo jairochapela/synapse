@@ -736,4 +736,4 @@ class Auth(object):
                     errcode=Codes.MISSING_TOKEN
                 )
 
-            return query_params[0]
+            return query_params[0].decode('ascii')
