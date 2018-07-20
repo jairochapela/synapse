@@ -290,11 +290,11 @@ class EventsWorkerStore(SQLBaseStore):
                 logger.exception("do_fetch")
 
                 # We only want to resolve deferreds from the main thread
-                def fire(evs):
+                def fire(evs, exc):
                     for _, d in evs:
                         if not d.called:
                             with PreserveLoggingContext():
-                                d.errback(e)
+                                d.errback(exc)
 
                 with PreserveLoggingContext():
                     self.hs.get_reactor().callFromThread(fire, event_list)

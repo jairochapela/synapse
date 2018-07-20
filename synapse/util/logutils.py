@@ -28,8 +28,12 @@ def _log_debug_as_f(f, msg, msg_args):
     logger = logging.getLogger(name)
 
     if logger.isEnabledFor(logging.DEBUG):
-        lineno = f.func_code.co_firstlineno
-        pathname = f.func_code.co_filename
+        if PY3:
+            lineno = f.__code__.co_firstlineno
+            pathname = f.__code__.co_filename
+        else:
+            lineno = f.func_code.co_firstlineno
+            pathname = f.func_code.co_filename
 
         record = logging.LogRecord(
             name=name,
