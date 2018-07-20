@@ -878,7 +878,7 @@ class AuthHandler(BaseHandler):
 
         Args:
             password (str): Password to hash.
-            stored_hash (str): Expected hash value.
+            stored_hash (bytes): Expected hash value.
 
         Returns:
             Deferred(bool): Whether self.hash(password) == stored_hash.
@@ -891,7 +891,7 @@ class AuthHandler(BaseHandler):
                 pw = unicodedata.normalize("NFKC", password)
             return bcrypt.checkpw(
                 pw.encode('utf8') + self.hs.config.password_pepper.encode("utf8"),
-                stored_hash.encode('utf8')
+                stored_hash
             )
 
         if stored_hash:

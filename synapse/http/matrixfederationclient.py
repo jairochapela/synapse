@@ -585,7 +585,7 @@ class MatrixFederationHttpClient(object):
                 vs = [vs]
             encoded_args[k] = [v.encode("UTF-8") for v in vs]
 
-        query_bytes = urllib.parse.urlencode(encoded_args, True)
+        query_bytes = urllib.parse.urlencode(encoded_args, True).encode('utf8')
         logger.debug("Query bytes: %s Retry DNS: %s", query_bytes, retry_on_dns_fail)
 
         def body_callback(method, url_bytes, headers_dict):

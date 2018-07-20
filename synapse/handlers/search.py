@@ -260,16 +260,16 @@ class SearchHandler(BaseHandler):
                 if batch_group and batch_group_key:
                     global_next_batch = encode_base64("%s\n%s\n%s" % (
                         batch_group, batch_group_key, pagination_token
-                    ))
+                    ).encode('ascii'))
                 else:
                     global_next_batch = encode_base64("%s\n%s\n%s" % (
                         "all", "", pagination_token
-                    ))
+                    ).encode('ascii'))
 
                 for room_id, group in room_groups.items():
                     group["next_batch"] = encode_base64("%s\n%s\n%s" % (
                         "room_id", room_id, pagination_token
-                    ))
+                    ).encode('ascii'))
 
             allowed_events.extend(room_events)
 

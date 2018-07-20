@@ -94,8 +94,8 @@ def parse_boolean_from_args(args, name, default=None, required=False):
     if name in args:
         try:
             return {
-                "true": True,
-                "false": False,
+                b"true": True,
+                b"false": False,
             }[args[name][0]]
         except Exception:
             message = (
@@ -145,14 +145,14 @@ def parse_string_from_args(args, name, default=None, required=False,
         name = name.encode('ascii')
 
     if name in args:
-        value = args[name][0]
+        value = args[name][0].decode('ascii')
         if allowed_values is not None and value not in allowed_values:
             message = "Query parameter %r must be one of [%s]" % (
                 name, ", ".join(repr(v) for v in allowed_values)
             )
             raise SynapseError(400, message)
         else:
-            return value.decode('ascii')
+            return value
     else:
         if required:
             message = "Missing %s query parameter %r" % (param_type, name)

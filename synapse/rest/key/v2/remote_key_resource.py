@@ -135,6 +135,9 @@ class RemoteKey(Resource):
     @defer.inlineCallbacks
     def query_keys(self, request, query, query_remote_on_cache_miss=False):
         logger.info("Handling query for keys %r", query)
+
+        query = {x.decode('utf8'):{a.decode('utf8'):b for a, b in y.items()} for x, y in query.items()}
+
         store_queries = []
         for server_name, key_ids in query.items():
             if (

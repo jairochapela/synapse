@@ -18,7 +18,7 @@ import logging
 
 import treq
 
-from six import StringIO, text_type
+from six import BytesIO, text_type
 from six.moves import urllib
 
 from canonicaljson import encode_canonical_json, json
@@ -91,6 +91,8 @@ class SimpleHttpClient(object):
         if hs.config.user_agent_suffix:
             self.user_agent = "%s %s" % (self.user_agent, hs.config.user_agent_suffix,)
 
+        self.user_agent = self.user_agent.encode('ascii')
+
     @defer.inlineCallbacks
     def request(self, method, uri, *args, **kwargs):
         # A small wrapper around self.agent.request() so we can easily attach
@@ -102,7 +104,7 @@ class SimpleHttpClient(object):
 
         try:
             request_deferred = treq.request(
-                method, uri, *args, agent=self.agent, **kwargs
+                method, uri, *args, agent=self.agent, data=kwargs.get("bodyProducer"), **kwargs
             )
             add_timeout_to_deferred(
                 request_deferred, 60, self.hs.get_reactor(),
@@ -140,7 +142,7 @@ class SimpleHttpClient(object):
         # TODO: Do we ever want to log message contents?
         logger.debug("post_urlencoded_get_json args: %s", args)
 
-        query_bytes = urllib.parse.urlencode(encode_urlencode_args(args), True)
+        query_bytes = urllib.parse.urlencode(encode_urlencode_args(args), True).encode("utf8")
 
         actual_headers = {
             b"Content-Type": [b"application/x-www-form-urlencoded"],
@@ -153,7 +155,7 @@ class SimpleHttpClient(object):
             "POST",
             uri,
             headers=Headers(actual_headers),
-            bodyProducer=FileBodyProducer(StringIO(query_bytes))
+            bodyProducer=query_bytes
         )
 
         body = yield make_deferred_yieldable(treq.json_content(response))

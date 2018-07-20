@@ -340,7 +340,7 @@ class FederationStateServlet(BaseFederationServlet):
         return self.handler.on_context_state_request(
             origin,
             context,
-            query.get("event_id", [None])[0],
+            parse_string_from_args(query, "event_id", None),
         )
 
 
@@ -351,7 +351,7 @@ class FederationStateIdsServlet(BaseFederationServlet):
         return self.handler.on_state_ids_request(
             origin,
             room_id,
-            query.get("event_id", [None])[0],
+            parse_string_from_args(query, "event_id", None),
         )
 
 
@@ -359,8 +359,8 @@ class FederationBackfillServlet(BaseFederationServlet):
     PATH = "/backfill/(?P<context>[^/]*)/"
 
     def on_GET(self, origin, content, query, context):
-        versions = query["v"]
-        limits = query["limit"]
+        versions = [x.decode('ascii') for x in query[b"v"]]
+        limits = parse_string_from_args(query, "limit", None)
 
         if not limits:
             return defer.succeed((400, {"error": "Did not include limit param"}))
