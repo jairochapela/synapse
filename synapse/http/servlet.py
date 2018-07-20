@@ -46,6 +46,10 @@ def parse_integer(request, name, default=None, required=False):
 
 
 def parse_integer_from_args(args, name, default=None, required=False):
+
+    if not isinstance(name, bytes):
+        name = name.encode('ascii')
+
     if name in args:
         try:
             return int(args[name][0])
@@ -83,6 +87,10 @@ def parse_boolean(request, name, default=None, required=False):
 
 
 def parse_boolean_from_args(args, name, default=None, required=False):
+
+    if not isinstance(name, bytes):
+        name = name.encode('ascii')
+
     if name in args:
         try:
             return {
@@ -132,6 +140,10 @@ def parse_string(request, name, default=None, required=False,
 
 def parse_string_from_args(args, name, default=None, required=False,
                            allowed_values=None, param_type="string"):
+
+    if not isinstance(name, bytes):
+        name = name.encode('ascii')
+
     if name in args:
         value = args[name][0]
         if allowed_values is not None and value not in allowed_values:
@@ -140,7 +152,7 @@ def parse_string_from_args(args, name, default=None, required=False,
             )
             raise SynapseError(400, message)
         else:
-            return value
+            return value.decode('ascii')
     else:
         if required:
             message = "Missing %s query parameter %r" % (param_type, name)

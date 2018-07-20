@@ -157,7 +157,7 @@ class UserRegisterServlet(ClientV1RestServlet):
             key=self.hs.config.registration_shared_secret.encode(),
             digestmod=hashlib.sha1,
         )
-        want_mac.update(nonce)
+        want_mac.update(nonce.encode('utf8'))
         want_mac.update(b"\x00")
         want_mac.update(username)
         want_mac.update(b"\x00")
@@ -176,8 +176,8 @@ class UserRegisterServlet(ClientV1RestServlet):
         register = RegisterRestServlet(self.hs)
 
         (user_id, _) = yield register.registration_handler.register(
-            localpart=username.lower(), password=password, admin=bool(admin),
-            generate_token=False,
+            localpart=body['username'].lower(), password=body['password'],
+            admin=bool(admin),generate_token=False,
         )
 
         result = yield register._create_registration_details(user_id, body)

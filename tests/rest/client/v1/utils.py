@@ -205,7 +205,7 @@ class RestHelper(object):
         data = {"membership": membership}
 
         request, channel = make_request(
-            b"PUT", path.encode('ascii'), json.dumps(data).encode('utf8')
+            "PUT", path, json.dumps(data).encode('utf8')
         )
 
         request.render(self.resource)

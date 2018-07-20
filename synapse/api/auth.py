@@ -680,7 +680,7 @@ class Auth(object):
         Returns:
             bool: False if no access_token was given, True otherwise.
         """
-        query_params = request.args.get("access_token")
+        query_params = request.args.get(b"access_token")
         auth_headers = request.requestHeaders.getRawHeaders(b"Authorization")
         return bool(query_params) or bool(auth_headers)
 
@@ -718,9 +718,9 @@ class Auth(object):
                     "Too many Authorization headers.",
                     errcode=Codes.MISSING_TOKEN,
                 )
-            parts = auth_headers[0].split(" ")
-            if parts[0] == "Bearer" and len(parts) == 2:
-                return parts[1]
+            parts = auth_headers[0].split(b" ")
+            if parts[0] == b"Bearer" and len(parts) == 2:
+                return parts[1].decode('ascii')
             else:
                 raise AuthError(
                     token_not_found_http_status,
