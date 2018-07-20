@@ -256,7 +256,7 @@ class EventsWorkerStore(SQLBaseStore):
         """
         with Measure(self._clock, "_fetch_event_list"):
             try:
-                event_id_lists = zip(*event_list)[0]
+                event_id_lists = list(zip(*event_list))[0]
                 event_ids = [
                     item for sublist in event_id_lists for item in sublist
                 ]
@@ -297,7 +297,7 @@ class EventsWorkerStore(SQLBaseStore):
                                 d.errback(exc)
 
                 with PreserveLoggingContext():
-                    self.hs.get_reactor().callFromThread(fire, event_list)
+                    self.hs.get_reactor().callFromThread(fire, event_list, e)
 
     @defer.inlineCallbacks
     def _enqueue_events(self, events, check_redacted=True, allow_rejected=False):
