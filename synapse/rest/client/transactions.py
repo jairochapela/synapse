@@ -55,11 +55,7 @@ class HttpTransactionCache(object):
             str: A transaction key
         """
         token = self.auth.get_access_token_from_request(request)
-        key = request.path + b"/" + token
-
-        if PY3:
-            return key.decode('utf8')
-        return key
+        return request.path.decode('utf8') + "/" + token
 
     def fetch_or_execute_request(self, request, fn, *args, **kwargs):
         """A helper function for fetch_or_execute which extracts
