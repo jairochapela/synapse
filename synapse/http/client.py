@@ -16,11 +16,10 @@
 
 import logging
 
-import treq
-
 from six import BytesIO, text_type
 from six.moves import urllib
 
+import treq
 from canonicaljson import encode_canonical_json, json
 from prometheus_client import Counter
 

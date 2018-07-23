@@ -17,23 +17,22 @@ import cgi
 import logging
 import random
 import sys
-import treq
 
-from zope.interface import implementer
-
-from six import string_types, PY3
+from six import PY3, string_types
 from six.moves import urllib
 
+import treq
 from canonicaljson import encode_canonical_json, json
 from prometheus_client import Counter
 from signedjson.sign import sign_json
+from zope.interface import implementer
 
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.error import DNSLookupError
 from twisted.web._newclient import ResponseDone
-from twisted.web.iweb import IBodyProducer
 from twisted.web.client import Agent, HTTPConnectionPool, readBody
 from twisted.web.http_headers import Headers
+from twisted.web.iweb import IBodyProducer
 
 import synapse.metrics
 import synapse.util.retryutils

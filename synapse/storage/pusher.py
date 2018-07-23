@@ -16,6 +16,7 @@
 
 import logging
 import types
+
 import six
 
 from canonicaljson import encode_canonical_json, json

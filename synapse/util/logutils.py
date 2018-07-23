@@ -17,11 +17,10 @@
 import inspect
 import logging
 import time
-
-from six import PY3
-
 from functools import wraps
 from inspect import getcallargs
+
+from six import PY3
 
 _TIME_FUNC_ID = 0
 

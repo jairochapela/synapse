@@ -16,9 +16,9 @@
 
 import hashlib
 import logging
+from collections import namedtuple
 
 from six.moves import urllib
-from collections import namedtuple
 
 from signedjson.key import (
     decode_verify_key_bytes,

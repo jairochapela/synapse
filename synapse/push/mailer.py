@@ -17,9 +17,10 @@ import email.mime.multipart
 import email.utils
 import logging
 import time
-from six.moves import urllib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+
+from six.moves import urllib
 
 import bleach
 import jinja2
