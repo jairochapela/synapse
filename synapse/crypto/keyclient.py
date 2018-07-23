@@ -78,9 +78,9 @@ class SynapseKeyClientProtocol(HTTPClient):
         self._peer = self.transport.getPeer()
         logger.debug("Connected to %s", self._peer)
 
-        self.sendCommand(b"GET", self.path.encode('ascii'))
+        self.sendCommand(b"GET", self.path)
         if self.host:
-            self.sendHeader(b"Host", self.host.encode('ascii'))
+            self.sendHeader(b"Host", self.host)
         self.endHeaders()
         self.timer = reactor.callLater(
             self.timeout,
