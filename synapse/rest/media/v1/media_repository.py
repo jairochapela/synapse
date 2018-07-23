@@ -400,21 +400,22 @@ class MediaRepository(object):
             upload_name = None
 
             # First check if there is a valid UTF-8 filename
-            upload_name_utf8 = params.get(b"filename*", None)
+            upload_name_utf8 = params.get("filename*", None)
             if upload_name_utf8:
                 if upload_name_utf8.lower().startswith(b"utf-8''"):
                     upload_name = upload_name_utf8[7:]
 
             # If there isn't check for an ascii name.
             if not upload_name:
-                upload_name_ascii = params.get(b"filename", None)
+                upload_name_ascii = params.get("filename", None)
                 if upload_name_ascii and is_ascii(upload_name_ascii):
                     upload_name = upload_name_ascii
 
             if upload_name:
                 upload_name = urlparse.unquote(upload_name)
                 try:
-                    upload_name = upload_name.decode("utf-8")
+                    if isinstance(upload_name, bytes):
+                        upload_name = upload_name.decode("utf-8")
                 except UnicodeDecodeError:
                     upload_name = None
         else:

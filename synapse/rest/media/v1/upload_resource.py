@@ -66,10 +66,10 @@ class UploadResource(Resource):
                 code=413,
             )
 
-        upload_name = parse_string(request, "filename")
+        upload_name = parse_string(request, b"filename", encoding=None)
         if upload_name:
             try:
-                upload_name = upload_name.decode('UTF-8')
+                upload_name = upload_name.decode('utf8')
             except UnicodeDecodeError:
                 raise SynapseError(
                     msg="Invalid UTF-8 filename parameter: %r" % (upload_name),

@@ -15,9 +15,8 @@
 
 import logging
 import os
-import urllib
 
-from six.moves.urllib import parse as urlparse
+from six.moves import urllib
 
 from twisted.internet import defer
 from twisted.protocols.basic import FileSender
@@ -43,7 +42,7 @@ def parse_media_id(request):
         file_name = None
         if len(request.postpath) > 2:
             try:
-                file_name = urlparse.unquote(request.postpath[-1]).decode("utf-8")
+                file_name = urllib.parse.unquote(request.postpath[-1].decode("utf-8"))
             except UnicodeDecodeError:
                 pass
         return server_name, media_id, file_name
@@ -101,19 +100,16 @@ def add_file_headers(request, media_type, file_size, upload_name):
     request.setHeader(b"Content-Type", media_type.encode("UTF-8"))
     if upload_name:
         if is_ascii(upload_name):
-            request.setHeader(
-                b"Content-Disposition",
-                b"inline; filename=%s" % (
-                    urllib.quote(upload_name.encode("utf-8")),
-                ),
-            )
+
+            disposition = ("inline; filename=%s" % (
+                    urllib.parse.quote(upload_name.encode("utf-8")),
+                )).encode("utf-8")
         else:
-            request.setHeader(
-                b"Content-Disposition",
-                b"inline; filename*=utf-8''%s" % (
-                    urllib.quote(upload_name.encode("utf-8")),
-                ),
-            )
+            disposition = ("inline; filename*=utf-8''%s" % (
+                urllib.parse.quote(upload_name.encode("utf-8")),
+            )).encode("utf-8")
+
+        request.setHeader(b"Content-Disposition", disposition)
 
     # cache for at least a day.
     # XXX: we might want to turn this off for data we don't want to
