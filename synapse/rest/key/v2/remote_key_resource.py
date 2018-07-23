@@ -103,7 +103,7 @@ class RemoteKey(Resource):
     def async_render_GET(self, request):
         if len(request.postpath) == 1:
             server, = request.postpath
-            query = {server: {}}
+            query = {server.decode('ascii'): {}}
         elif len(request.postpath) == 2:
             server, key_id = request.postpath
             minimum_valid_until_ts = parse_integer(
@@ -112,11 +112,12 @@ class RemoteKey(Resource):
             arguments = {}
             if minimum_valid_until_ts is not None:
                 arguments["minimum_valid_until_ts"] = minimum_valid_until_ts
-            query = {server: {key_id: arguments}}
+            query = {server.decode('ascii'): {key_id.decode('ascii'): arguments}}
         else:
             raise SynapseError(
                 404, "Not found %r" % request.postpath, Codes.NOT_FOUND
             )
+
         yield self.query_keys(request, query, query_remote_on_cache_miss=True)
 
     def render_POST(self, request):
@@ -135,8 +136,6 @@ class RemoteKey(Resource):
     @defer.inlineCallbacks
     def query_keys(self, request, query, query_remote_on_cache_miss=False):
         logger.info("Handling query for keys %r", query)
-
-        query = {x:{a.decode('utf8'):b for a, b in y.items()} for x, y in query.items()}
 
         store_queries = []
         for server_name, key_ids in query.items():
@@ -210,10 +209,10 @@ class RemoteKey(Resource):
 
                 if miss:
                     cache_misses.setdefault(server_name, set()).add(key_id)
-                json_results.add(most_recent_result["key_json"].encode('ascii'))
+                json_results.add(bytes(most_recent_result["key_json"]))
             else:
                 for ts_added, result in results:
-                    json_results.add(result["key_json"].encode('ascii'))
+                    json_results.add(bytes(result["key_json"]))
 
         if cache_misses and query_remote_on_cache_miss:
             for server_name, key_ids in cache_misses.items():
