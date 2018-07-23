@@ -883,6 +883,8 @@ class AuthHandler(BaseHandler):
         Returns:
             Deferred(bool): Whether self.hash(password) == stored_hash.
         """
+        if not isinstance(stored_hash, bytes):
+            stored_hash = stored_hash.encode('ascii')
 
         def _do_validate_hash():
             if isinstance(password, bytes):
