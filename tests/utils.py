@@ -147,7 +147,8 @@ def setup_test_homeserver(name="test", datastore=None, config=None, reactor=None
     # because AuthHandler's constructor requires the HS, so we can't make one
     # beforehand and pass it in to the HS's constructor (chicken / egg)
     hs.get_auth_handler().hash = lambda p: hashlib.md5(p.encode('utf8')).hexdigest()
-    hs.get_auth_handler().validate_hash = lambda p, h: hashlib.md5(p.encode('utf8')).hexdigest() == h
+    hs.get_auth_handler().validate_hash = lambda p, h: hashlib.md5(
+        p.encode('utf8')).hexdigest() == h
 
     fed = kargs.get("resource_for_federation", None)
     if fed:

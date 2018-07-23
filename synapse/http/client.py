@@ -16,7 +16,7 @@
 
 import logging
 
-from six import BytesIO, text_type
+from six import text_type
 from six.moves import urllib
 
 import treq
@@ -148,7 +148,8 @@ class SimpleHttpClient(object):
         # TODO: Do we ever want to log message contents?
         logger.debug("post_urlencoded_get_json args: %s", args)
 
-        query_bytes = urllib.parse.urlencode(encode_urlencode_args(args), True).encode("utf8")
+        query_bytes = urllib.parse.urlencode(
+            encode_urlencode_args(args), True).encode("utf8")
 
         actual_headers = {
             b"Content-Type": [b"application/x-www-form-urlencoded"],

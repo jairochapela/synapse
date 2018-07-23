@@ -97,17 +97,16 @@ def add_file_headers(request, media_type, file_size, upload_name):
         file_size (int): Size in bytes of the media, if known.
         upload_name (str): The name of the requested file, if any.
     """
+    def _quote(x):
+        return urllib.parse.quote(x.encode("utf-8"))
+
     request.setHeader(b"Content-Type", media_type.encode("UTF-8"))
     if upload_name:
         if is_ascii(upload_name):
-
-            disposition = ("inline; filename=%s" % (
-                    urllib.parse.quote(upload_name.encode("utf-8")),
-                )).encode("utf-8")
+            disposition = ("inline; filename=%s" % (_quote(upload_name),)).encode("ascii")
         else:
-            disposition = ("inline; filename*=utf-8''%s" % (
-                urllib.parse.quote(upload_name.encode("utf-8")),
-            )).encode("utf-8")
+            disposition = (
+                "inline; filename*=utf-8''%s" % (_quote(upload_name),)).encode("ascii")
 
         request.setHeader(b"Content-Disposition", disposition)
 

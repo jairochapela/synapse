@@ -177,7 +177,7 @@ class UserRegisterServlet(ClientV1RestServlet):
 
         (user_id, _) = yield register.registration_handler.register(
             localpart=body['username'].lower(), password=body['password'],
-            admin=bool(admin),generate_token=False,
+            admin=bool(admin), generate_token=False,
         )
 
         result = yield register._create_registration_details(user_id, body)

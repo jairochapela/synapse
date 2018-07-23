@@ -14,10 +14,9 @@
 # limitations under the License.
 
 import logging
-import urllib
 import xml.etree.ElementTree as ET
 
-from six.moves.urllib import parse as urlparse
+from six.moves import urllib
 
 from canonicaljson import json
 from saml2 import BINDING_HTTP_POST, config
@@ -400,7 +399,8 @@ class CasRedirectServlet(ClientV1RestServlet):
         client_redirect_url_param = urllib.parse.urlencode({
             b"redirectUrl": args[b"redirectUrl"][0]
         }).encode('ascii')
-        hs_redirect_url = self.cas_service_url + b"/_matrix/client/api/v1/login/cas/ticket"
+        hs_redirect_url = (self.cas_service_url +
+                           b"/_matrix/client/api/v1/login/cas/ticket")
         service_param = urllib.parse.urlencode({
             b"service": b"%s?%s" % (hs_redirect_url, client_redirect_url_param)
         }).encode('ascii')
@@ -471,11 +471,11 @@ class CasTicketServlet(ClientV1RestServlet):
         finish_request(request)
 
     def add_login_token_to_redirect_url(self, url, token):
-        url_parts = list(urlparse.urlparse(url))
-        query = dict(urlparse.parse_qsl(url_parts[4]))
+        url_parts = list(urllib.parse.urlparse(url))
+        query = dict(urllib.parse.parse_qsl(url_parts[4]))
         query.update({"loginToken": token})
         url_parts[4] = urllib.parse.urlencode(query).encode('ascii')
-        return urlparse.urlunparse(url_parts)
+        return urllib.parse.urlunparse(url_parts)
 
     def parse_cas_response(self, cas_response_body):
         user = None

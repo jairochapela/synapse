@@ -20,7 +20,7 @@ import logging
 import os
 import shutil
 
-from six import iteritems
+from six import iteritems, PY3
 from six.moves.urllib import parse as urlparse
 
 import twisted.internet.error
@@ -412,7 +412,10 @@ class MediaRepository(object):
                     upload_name = upload_name_ascii
 
             if upload_name:
-                upload_name = urlparse.unquote(upload_name)
+                if PY3:
+                    upload_name = urlparse.unquote(upload_name)
+                else:
+                    upload_name = urlparse.unquote(upload_name.encode('ascii'))
                 try:
                     if isinstance(upload_name, bytes):
                         upload_name = upload_name.decode("utf-8")
