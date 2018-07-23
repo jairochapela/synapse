@@ -402,7 +402,7 @@ class MediaRepository(object):
             # First check if there is a valid UTF-8 filename
             upload_name_utf8 = params.get("filename*", None)
             if upload_name_utf8:
-                if upload_name_utf8.lower().startswith(b"utf-8''"):
+                if upload_name_utf8.lower().startswith("utf-8''"):
                     upload_name = upload_name_utf8[7:]
 
             # If there isn't check for an ascii name.
