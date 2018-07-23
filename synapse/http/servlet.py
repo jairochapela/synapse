@@ -48,7 +48,7 @@ def parse_integer(request, name, default=None, required=False):
 def parse_integer_from_args(args, name, default=None, required=False):
 
     if not isinstance(name, bytes):
-        name = name.encode('ascii')
+        name = name.encode('utf8')
 
     if name in args:
         try:
@@ -89,7 +89,7 @@ def parse_boolean(request, name, default=None, required=False):
 def parse_boolean_from_args(args, name, default=None, required=False):
 
     if not isinstance(name, bytes):
-        name = name.encode('ascii')
+        name = name.encode('utf8')
 
     if name in args:
         try:
@@ -112,7 +112,7 @@ def parse_boolean_from_args(args, name, default=None, required=False):
 
 
 def parse_string(request, name, default=None, required=False,
-                 allowed_values=None, param_type="string"):
+                 allowed_values=None, param_type="string", encoding='ascii'):
     """Parse a string parameter from the request query string.
 
     Args:
@@ -134,18 +134,22 @@ def parse_string(request, name, default=None, required=False,
             is not one of those allowed values.
     """
     return parse_string_from_args(
-        request.args, name, default, required, allowed_values, param_type,
+        request.args, name, default, required, allowed_values, param_type, encoding
     )
 
 
 def parse_string_from_args(args, name, default=None, required=False,
-                           allowed_values=None, param_type="string"):
+                           allowed_values=None, param_type="string", encoding='ascii'):
 
-    if not isinstance(name, bytes):
-        name = name.encode('ascii')
+    if not isinstance(name, bytes) and encoding:
+        name = name.encode(encoding)
 
     if name in args:
-        value = args[name][0].decode('ascii')
+        value = args[name][0]
+
+        if encoding:
+            value = value.decode(encoding)
+
         if allowed_values is not None and value not in allowed_values:
             message = "Query parameter %r must be one of [%s]" % (
                 name, ", ".join(repr(v) for v in allowed_values)
