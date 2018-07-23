@@ -103,8 +103,15 @@ class SimpleHttpClient(object):
         logger.info("Sending request %s %s", method, redact_uri(uri.encode('ascii')))
 
         try:
+            if "data" in kwargs:
+                data = kwargs.pop("data")
+            elif "bodyProducer" in kwargs:
+                data = kwargs.pop("bodyProducer")
+            else:
+                data = None
+
             request_deferred = treq.request(
-                method, uri, *args, agent=self.agent, data=kwargs.get("bodyProducer"), **kwargs
+                method, uri, *args, agent=self.agent, data=data, **kwargs
             )
             add_timeout_to_deferred(
                 request_deferred, 60, self.hs.get_reactor(),
