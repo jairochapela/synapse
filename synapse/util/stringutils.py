@@ -35,6 +35,18 @@ def random_string_with_symbols(length):
 
 
 def is_ascii(s):
+
+    if PY3:
+        if isinstance(s, bytes):
+            try:
+                s.decode('ascii').encode('ascii')
+            except UnicodeDecodeError:
+                return False
+            except UnicodeEncodeError:
+                return False
+            return True
+
+
     try:
         s.encode("ascii")
     except UnicodeEncodeError:
