@@ -20,7 +20,7 @@ import logging
 import os
 import shutil
 
-from six import iteritems, PY3
+from six import PY3, iteritems
 from six.moves.urllib import parse as urlparse
 
 import twisted.internet.error
