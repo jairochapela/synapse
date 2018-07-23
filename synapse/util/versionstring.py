@@ -30,7 +30,7 @@ def get_version_string(module):
                 ['git', 'rev-parse', '--abbrev-ref', 'HEAD'],
                 stderr=null,
                 cwd=cwd,
-            ).strip()
+            ).strip().decode('ascii')
             git_branch = "b=" + git_branch
         except subprocess.CalledProcessError:
             git_branch = ""
@@ -40,7 +40,7 @@ def get_version_string(module):
                 ['git', 'describe', '--exact-match'],
                 stderr=null,
                 cwd=cwd,
-            ).strip()
+            ).strip().decode('ascii')
             git_tag = "t=" + git_tag
         except subprocess.CalledProcessError:
             git_tag = ""
@@ -50,7 +50,7 @@ def get_version_string(module):
                 ['git', 'rev-parse', '--short', 'HEAD'],
                 stderr=null,
                 cwd=cwd,
-            ).strip()
+            ).strip().decode('ascii')
         except subprocess.CalledProcessError:
             git_commit = ""
 
@@ -60,7 +60,7 @@ def get_version_string(module):
                 ['git', 'describe', '--dirty=' + dirty_string],
                 stderr=null,
                 cwd=cwd,
-            ).strip().endswith(dirty_string)
+            ).strip().decode('ascii').endswith(dirty_string)
 
             git_dirty = "dirty" if is_dirty else ""
         except subprocess.CalledProcessError:
