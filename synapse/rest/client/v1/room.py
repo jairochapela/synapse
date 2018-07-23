@@ -206,7 +206,7 @@ class RoomSendEventRestServlet(ClientV1RestServlet):
             "sender": requester.user.to_string(),
         }
 
-        if 'ts' in request.args and requester.app_service:
+        if b'ts' in request.args and requester.app_service:
             event_dict['origin_server_ts'] = parse_integer(request, "ts", 0)
 
         event = yield self.event_creation_hander.create_and_send_nonmember_event(

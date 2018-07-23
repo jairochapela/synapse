@@ -1896,7 +1896,7 @@ class EventsStore(EventsWorkerStore):
             (room_id,)
         )
         rows = txn.fetchall()
-        max_depth = max(row[0] for row in rows)
+        max_depth = max(int(row[0]) for row in rows)
 
         if max_depth <= token.topological:
             # We need to ensure we don't delete all the events from the datanase

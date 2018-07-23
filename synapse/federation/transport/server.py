@@ -359,13 +359,13 @@ class FederationBackfillServlet(BaseFederationServlet):
     PATH = "/backfill/(?P<context>[^/]*)/"
 
     def on_GET(self, origin, content, query, context):
+        print(origin, content, query, context)
+
         versions = [x.decode('ascii') for x in query[b"v"]]
-        limits = parse_string_from_args(query, "limit", None)
+        limit = parse_integer_from_args(query, "limit", None)
 
-        if not limits:
+        if not limit:
             return defer.succeed((400, {"error": "Did not include limit param"}))
-
-        limit = int(limits[-1])
 
         return self.handler.on_backfill_request(origin, context, versions, limit)
 
