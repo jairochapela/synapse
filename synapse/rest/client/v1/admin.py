@@ -177,7 +177,7 @@ class UserRegisterServlet(ClientV1RestServlet):
 
         password = password.decode('utf-8')
         (user_id, _) = yield register.registration_handler.register(
-            localpart=body['username'].lower(), password=body['password'],
+            localpart=body['username'].lower(), password=password,
             admin=bool(admin), generate_token=False,
         )
 
