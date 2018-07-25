@@ -17,6 +17,8 @@
 import logging
 import unicodedata
 
+from six import PY2
+
 import attr
 import bcrypt
 import pymacaroons
@@ -627,6 +629,10 @@ class AuthHandler(BaseHandler):
         # special case to check for "password" for the check_password interface
         # for the auth providers
         password = login_submission.get("password")
+
+        if password and PY2:
+            password = password.decode('utf8')
+
         if login_type == LoginType.PASSWORD:
             if not self._password_enabled:
                 raise SynapseError(400, "Password login has been disabled.")
@@ -709,6 +715,7 @@ class AuthHandler(BaseHandler):
 
         Args:
             user_id (str): complete @user:id
+            password (unicode): the provided password
         Returns:
             (str) the canonical_user_id, or None if unknown user / bad password
         """
@@ -850,17 +857,14 @@ class AuthHandler(BaseHandler):
         """Computes a secure hash of password.
 
         Args:
-            password (str): Password to hash.
+            password (unicode): Password to hash.
 
         Returns:
             Deferred(str): Hashed password.
         """
         def _do_hash():
-            # Ensure that we normalise the password
-            if isinstance(password, bytes):
-                pw = unicodedata.normalize("NFKC", password.decode('utf8'))
-            else:
-                pw = unicodedata.normalize("NFKC", password)
+            # Normalise the Unicode in the password
+            pw = unicodedata.normalize("NFKC", password)
 
             return bcrypt.hashpw(
                 pw.encode('utf8') + self.hs.config.password_pepper.encode("utf8"),
@@ -877,17 +881,16 @@ class AuthHandler(BaseHandler):
         """Validates that self.hash(password) == stored_hash.
 
         Args:
-            password (str): Password to hash.
-            stored_hash (bytes): Expected hash value.
+            password (unicode): Password to hash.
+            stored_hash (str): Expected hash value.
 
         Returns:
             Deferred(bool): Whether self.hash(password) == stored_hash.
         """
         def _do_validate_hash():
-            if isinstance(password, bytes):
-                pw = unicodedata.normalize("NFKC", password.decode('utf8'))
-            else:
-                pw = unicodedata.normalize("NFKC", password)
+            # Normalise the Unicode in the password
+            pw = unicodedata.normalize("NFKC", password)
+
             return bcrypt.checkpw(
                 pw.encode('utf8') + self.hs.config.password_pepper.encode("utf8"),
                 stored_hash
