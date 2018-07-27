@@ -359,8 +359,6 @@ class Keyring(object):
                 )
                 defer.returnValue(result)
             except Exception as e:
-                import traceback
-                traceback.print_exc()
                 logger.exception(
                     "Unable to get key from %r: %s %s",
                     perspective_name,
@@ -435,7 +433,7 @@ class Keyring(object):
         # an incoming request.
         query_response = yield self.client.post_json(
             destination=perspective_name,
-            path=b"/_matrix/key/v2/query",
+            path="/_matrix/key/v2/query",
             data={
                 u"server_keys": {
                     server_name: {
