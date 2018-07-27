@@ -191,6 +191,7 @@ event_processing_last_ts = Gauge("synapse_event_processing_last_ts", "", ["name"
 event_processing_lag = Gauge("synapse_event_processing_lag", "", ["name"])
 
 last_ticked = time.time()
+last_gc = time.time()
 
 
 class ReactorLastSeenMetric(object):
@@ -246,6 +247,11 @@ def runUntilCurrentTimer(func):
         if running_on_pypy:
             return ret
 
+        # Don't GC more than once every five seconds.
+        global last_gc
+        if end - last_gc < 5:
+            return ret
+
         # Check if we need to do a manual GC (since its been disabled), and do
         # one if necessary.
         threshold = gc.get_threshold()
@@ -260,6 +266,7 @@ def runUntilCurrentTimer(func):
 
                 gc_time.labels(i).observe(end - start)
                 gc_unreachable.labels(i).set(unreachable)
+                last_gc = end
 
         return ret
 
