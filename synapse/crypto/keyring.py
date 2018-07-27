@@ -359,6 +359,8 @@ class Keyring(object):
                 )
                 defer.returnValue(result)
             except Exception as e:
+                import traceback
+                traceback.print_exc()
                 logger.exception(
                     "Unable to get key from %r: %s %s",
                     perspective_name,
