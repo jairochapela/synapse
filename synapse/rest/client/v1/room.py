@@ -255,7 +255,7 @@ class JoinRoomAliasServlet(ClientV1RestServlet):
         if RoomID.is_valid(room_identifier):
             room_id = room_identifier
             try:
-                remote_room_hosts = request.args["server_name"]
+                remote_room_hosts = request.args[b"server_name"].decode('ascii')
             except Exception:
                 remote_room_hosts = None
         elif RoomAlias.is_valid(room_identifier):
@@ -267,6 +267,8 @@ class JoinRoomAliasServlet(ClientV1RestServlet):
             raise SynapseError(400, "%s was not legal room ID or room alias" % (
                 room_identifier,
             ))
+
+        print(remote_room_hosts)
 
         yield self.room_member_handler.update_membership(
             requester=requester,
