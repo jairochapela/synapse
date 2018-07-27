@@ -207,7 +207,7 @@ class Linearizer(object):
                 yield make_deferred_yieldable(new_defer)
             except Exception as e:
                 if isinstance(e, CancelledError):
-                    logger.info(
+                    logger.debug(
                         "Cancelling wait for linearizer lock %r for key %r",
                         self.name, key,
                     )
@@ -221,7 +221,7 @@ class Linearizer(object):
                 del entry[1][new_defer]
                 raise
 
-            logger.info("Acquired linearizer lock %r for key %r", self.name, key)
+            logger.debug("Acquired linearizer lock %r for key %r", self.name, key)
             entry[0] += 1
 
             # if the code holding the lock completes synchronously, then it
@@ -237,7 +237,7 @@ class Linearizer(object):
             yield self._clock.sleep(0)
 
         else:
-            logger.info(
+            logger.debug(
                 "Acquired uncontended linearizer lock %r for key %r", self.name, key,
             )
             entry[0] += 1
@@ -247,7 +247,7 @@ class Linearizer(object):
             try:
                 yield
             finally:
-                logger.info("Releasing linearizer lock %r for key %r", self.name, key)
+                logger.debug("Releasing linearizer lock %r for key %r", self.name, key)
 
                 # We've finished executing so check if there are any things
                 # blocked waiting to execute and start one of them
