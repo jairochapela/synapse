@@ -173,7 +173,10 @@ class UserRegisterServlet(ClientV1RestServlet):
         want_mac.update(b"admin" if admin else b"notadmin")
         want_mac = want_mac.hexdigest()
 
-        if not hmac.compare_digest(want_mac, got_mac.encode('ascii')):
+        if not hmac.compare_digest(
+                want_mac.encode('ascii'),
+                got_mac.encode('ascii')
+        ):
             raise SynapseError(403, "HMAC incorrect")
 
         # Reuse the parts of RegisterRestServlet to reduce code duplication
