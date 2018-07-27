@@ -20,4 +20,4 @@
 __version__ = "0.33.0"
 
 from twisted.internet.protocol import Factory
-factory.noisy = False
+Factory.noisy = False
