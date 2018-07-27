@@ -78,6 +78,12 @@ class SynapseKeyClientProtocol(HTTPClient):
         self._peer = self.transport.getPeer()
         logger.debug("Connected to %s", self._peer)
 
+        if not isinstance(self.path, bytes):
+            self.path = self.path.encode('ascii')
+
+        if not isinstance(self.host, bytes):
+            self.host = self.host.encode('ascii')
+
         self.sendCommand(b"GET", self.path)
         if self.host:
             self.sendHeader(b"Host", self.host)
