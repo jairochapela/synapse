@@ -19,5 +19,10 @@
 
 __version__ = "0.33.0"
 
-from twisted.internet.protocol import Factory
-Factory.noisy = False
+try:
+    from twisted.internet import protocol
+    from twisted.names import dns
+    protocol.Factory.noisy = False
+    dns.DNSDatagramProtocol.noisy = False
+except ImportError:
+    pass
