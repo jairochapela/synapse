@@ -255,7 +255,7 @@ class JoinRoomAliasServlet(ClientV1RestServlet):
         if RoomID.is_valid(room_identifier):
             room_id = room_identifier
             try:
-                remote_room_hosts = request.args[b"server_name"].decode('ascii')
+                remote_room_hosts = [x.decode('ascii') for x in request.args[b"server_name"]]
             except Exception:
                 remote_room_hosts = None
         elif RoomAlias.is_valid(room_identifier):
