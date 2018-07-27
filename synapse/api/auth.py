@@ -211,7 +211,7 @@ class Auth(object):
             user_agent = request.requestHeaders.getRawHeaders(
                 b"User-Agent",
                 default=[b""]
-            )[0]
+            )[0].decode('ascii', 'surrogateescape')
             if user and access_token and ip_addr:
                 self.store.insert_client_ip(
                     user_id=user.to_string(),
