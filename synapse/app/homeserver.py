@@ -542,11 +542,7 @@ def main():
     with LoggingContext("main"):
         # check base requirements
         check_requirements()
-        try:
-            hs = setup(sys.argv[1:])
-        except Exception:
-            import traceback
-            traceback.print_exc()
+        hs = setup(sys.argv[1:])
         run(hs)
 
 
