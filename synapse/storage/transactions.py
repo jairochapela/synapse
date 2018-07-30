@@ -98,8 +98,8 @@ class TransactionStore(SQLBaseStore):
             try:
                 return result["response_code"], json.loads(result["response_json"])
             except:
-                logger.warn("!!!!!!!!!!!!!!!!!!")
-                logger.warn("Could not interpret '%s' as JSON!", result["response_json"])
+                logger.warning("!!!!!!!!!!!!!!!!!!")
+                logger.warning("Could not interpret '%s' as JSON!", result["response_json"])
 
         else:
             return None
