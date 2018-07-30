@@ -95,7 +95,12 @@ class TransactionStore(SQLBaseStore):
         )
 
         if result and result["response_code"]:
-            return result["response_code"], json.loads(str(result["response_json"]))
+
+            if not result["response_json"]:
+                logger.warn("Empty response JSON for transaction ID %s", transaction_id)
+                result["response_json"] = "{}"
+
+            return result["response_code"], json.loads(result["response_json"])
         else:
             return None
 

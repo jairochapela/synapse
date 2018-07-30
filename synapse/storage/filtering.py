@@ -44,7 +44,7 @@ class FilteringStore(SQLBaseStore):
             desc="get_user_filter",
         )
 
-        if isinstance(def_json, bytes):
+        if isinstance(def_json, (bytearray, bytes)):
             def_json = def_json.decode('utf8')
 
         print(type(def_json))
