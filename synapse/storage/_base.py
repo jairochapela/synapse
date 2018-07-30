@@ -1237,10 +1237,14 @@ def db_to_json(db_content):
         return json.loads(db_content)
     except Exception:
 
-        if db_content.startswith("{"):
-            import binascii
-            db_content_n = "{" +binascii.unhexlify(db_content[1:]).decode('utf8')
-            return json.loads(db_content_n)
+        try:
+            if db_content.startswith("{"):
+                logging.warning("Detecting mangled JSON, trying to unmangle...")
+                import binascii
+                db_content_n = "{" +binascii.unhexlify(db_content[1:]).decode('utf8')
+                return json.loads(db_content_n)
+        except Exception:
+            logging.warning("Failed to unmangle")
 
         logging.warning("Tried to decode '%s' as JSON and failed", db_content)
         raise
