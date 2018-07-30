@@ -1238,7 +1238,7 @@ def db_to_json(db_content):
     except Exception:
 
         try:
-            if db_content.startswith("{"):
+            if db_content.startswith("\x7b"):
                 logging.warning("Detecting mangled JSON, trying to unmangle...")
                 import binascii
                 db_content_n = "{" +binascii.unhexlify(db_content[1:]).decode('utf8')
@@ -1246,5 +1246,5 @@ def db_to_json(db_content):
         except Exception:
             logging.warning("Failed to unmangle")
 
-        logging.warning("Tried to decode '%s' as JSON and failed", db_content)
+        logging.warning("Tried to decode '%r' as JSON and failed", db_content)
         raise
