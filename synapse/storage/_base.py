@@ -20,6 +20,8 @@ import time
 from six import iteritems, iterkeys, itervalues
 from six.moves import intern, range
 
+from canonicaljson import encode_canonical_json, json
+
 from prometheus_client import Histogram
 
 from twisted.internet import defer
