@@ -330,7 +330,9 @@ class E2eKeysHandler(object):
                         (algorithm, key_id, ex_json, key)
                     )
             else:
-                new_keys.append((algorithm, key_id, encode_canonical_json(key)))
+                new_keys.append((
+                    algorithm, key_id, encode_canonical_json(key).decode('ascii')))
+
 
         yield self.store.add_e2e_one_time_keys(
             user_id, device_id, time_now, new_keys
