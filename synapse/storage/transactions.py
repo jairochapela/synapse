@@ -95,12 +95,12 @@ class TransactionStore(SQLBaseStore):
         )
 
         if result and result["response_code"]:
+            try:
+                return result["response_code"], json.loads(result["response_json"])
+            except:
+                logger.warn("!!!!!!!!!!!!!!!!!!")
+                logger.warn("Could not interpret '%s' as JSON!", result["response_json"])
 
-            if not result["response_json"]:
-                logger.warn("Empty response JSON for transaction ID %s", transaction_id)
-                result["response_json"] = "{}"
-
-            return result["response_code"], json.loads(result["response_json"])
         else:
             return None
 
