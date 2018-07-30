@@ -47,6 +47,8 @@ class FilteringStore(SQLBaseStore):
         if isinstance(def_json, bytes):
             def_json = def_json.decode('utf8')
 
+        print(type(def_json))
+
         defer.returnValue(json.loads(def_json))
 
     def add_user_filter(self, user_localpart, user_filter):
