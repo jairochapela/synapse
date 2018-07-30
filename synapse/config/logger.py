@@ -231,7 +231,10 @@ def setup_logging(config, use_worker_options=False):
 
     def _log(event):
 
-        if event["log_text"].startswith("DNSDatagramProtocol starting on"):
+        if event["log_text"].startswith("DNSDatagramProtocol starting on "):
+            return
+
+        if event["log_text"].startswith("(UDP Port "):
             return
 
         return observer(event)
