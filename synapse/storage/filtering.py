@@ -44,10 +44,13 @@ class FilteringStore(SQLBaseStore):
             desc="get_user_filter",
         )
 
+        # psycopg2 on Python 3 returns memoryview objects, which we need to
+        # cast to bytes to decode
+        if isinstance(def_json, memoryview):
+            def_json = def_json.tobytes()
+
         if isinstance(def_json, (bytearray, bytes)):
             def_json = def_json.decode('utf8')
-
-        print(type(def_json))
 
         defer.returnValue(json.loads(def_json))
 
