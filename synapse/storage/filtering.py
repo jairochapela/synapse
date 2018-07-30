@@ -20,7 +20,7 @@ from twisted.internet import defer
 from synapse.api.errors import Codes, SynapseError
 from synapse.util.caches.descriptors import cachedInlineCallbacks
 
-from ._base import SQLBaseStore
+from ._base import SQLBaseStore, db_to_json
 
 
 class FilteringStore(SQLBaseStore):
@@ -44,15 +44,7 @@ class FilteringStore(SQLBaseStore):
             desc="get_user_filter",
         )
 
-        # psycopg2 on Python 3 returns memoryview objects, which we need to
-        # cast to bytes to decode
-        if isinstance(def_json, memoryview):
-            def_json = def_json.tobytes()
-
-        if isinstance(def_json, (bytearray, bytes)):
-            def_json = def_json.decode('utf8')
-
-        defer.returnValue(json.loads(def_json))
+        defer.returnValue(db_to_json(def_json))
 
     def add_user_filter(self, user_localpart, user_filter):
         def_json = encode_canonical_json(user_filter)

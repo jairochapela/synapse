@@ -1217,3 +1217,18 @@ class _RollbackButIsFineException(Exception):
     something went wrong.
     """
     pass
+
+
+def db_to_json(db_content):
+    """
+    Take some data from a database row and return JSON.
+    """
+    # psycopg2 on Python 3 returns memoryview objects, which we need to
+    # cast to bytes to decode
+    if isinstance(db_content, memoryview):
+        db_content = db_content.tobytes()
+
+    if isinstance(db_content, (bytes, bytearray)):
+        db_content = db_content.decode('utf8')
+
+    return json.loads(db_content)

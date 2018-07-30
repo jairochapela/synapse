@@ -25,7 +25,7 @@ from twisted.internet import defer
 from synapse.metrics.background_process_metrics import run_as_background_process
 from synapse.util.caches.descriptors import cached
 
-from ._base import SQLBaseStore
+from ._base import SQLBaseStore, db_to_json
 
 # py2 sqlite has buffer hardcoded as only binary type, so we must use it,
 # despite being deprecated and removed in favor of memoryview
@@ -95,11 +95,7 @@ class TransactionStore(SQLBaseStore):
         )
 
         if result and result["response_code"]:
-            try:
-                return result["response_code"], json.loads(result["response_json"])
-            except:
-                logger.warning("!!!!!!!!!!!!!!!!!!")
-                logger.warning("Could not interpret '%s' as JSON!", result["response_json"])
+            return result["response_code"], db_to_json(result["response_json"])
 
         else:
             return None

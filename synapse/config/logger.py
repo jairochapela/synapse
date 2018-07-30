@@ -238,6 +238,9 @@ def setup_logging(config, use_worker_options=False):
             if event["log_text"].startswith("(UDP Port "):
                 return
 
+            if event["log_text"].startswith("Timing out client"):
+                return
+
         return observer(event)
 
     globalLogBeginner.beginLoggingTo(
