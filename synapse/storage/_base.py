@@ -1233,12 +1233,14 @@ def db_to_json(db_content):
     if isinstance(db_content, (bytes, bytearray)):
         db_content = db_content.decode('utf8')
 
-    if db_content.startswith("\x7b"):
-        import binascii
-        db_content = "{" +binascii.unhexlify(db_content[4:])
-
     try:
         return json.loads(db_content)
     except Exception:
+
+        if db_content.startswith("{"):
+            import binascii
+            db_content_n = "{" +binascii.unhexlify(db_content[1:]).decode('utf8')
+            return json.loads(db_content_n)
+
         logging.warning("Tried to decode '%s' as JSON and failed", db_content)
         raise
