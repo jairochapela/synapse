@@ -90,7 +90,7 @@ class EndToEndKeyStore(SQLBaseStore):
 
         for user_id, device_keys in iteritems(results):
             for device_id, device_info in iteritems(device_keys):
-                device_info["keys"] = db_to_json(device_info.pop("key_json")
+                device_info["keys"] = db_to_json(device_info.pop("key_json"))
 
         defer.returnValue(results)
 
