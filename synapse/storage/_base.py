@@ -1233,4 +1233,8 @@ def db_to_json(db_content):
     if isinstance(db_content, (bytes, bytearray)):
         db_content = db_content.decode('utf8')
 
-    return json.loads(db_content)
+    try:
+        return json.loads(db_content)
+    except Exception:
+        logging.warning("Tried to decode '%s' as JSON and failed", db_content)
+        raise
