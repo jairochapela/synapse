@@ -229,15 +229,9 @@ def setup_logging(config, use_worker_options=False):
     # However this may not be too much of a problem if we are just writing to a file.
     observer = STDLibLogObserver()
 
+    # Blackhole Twisted for now
     def _log(event):
-
-        if event["log_text"].startswith("DNSDatagramProtocol starting on "):
-            return
-
-        if event["log_text"].startswith("(UDP Port "):
-            return
-
-        return observer(event)
+        return
 
     globalLogBeginner.beginLoggingTo(
         [_log],
