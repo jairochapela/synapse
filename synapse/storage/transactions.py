@@ -18,7 +18,7 @@ from collections import namedtuple
 
 import six
 
-from canonicaljson import encode_canonical_json, json
+from canonicaljson import encode_canonical_json
 
 from twisted.internet import defer
 

@@ -148,6 +148,9 @@ class HomeserverTestCase(TestCase):
         hs_args = {"clock": self.clock, "reactor": self.reactor}
         self.hs = self.make_homeserver(self.reactor, self.clock, hs_args)
 
+        if self.hs is None:
+            raise Exception("No homeserver returned from make_homeserver.")
+
         # Register the resources
         self.resource = JsonResource(self.hs)
 
@@ -178,8 +181,6 @@ class HomeserverTestCase(TestCase):
                 self.hs.get_auth().get_access_token_from_request = Mock(
                     return_value="1234"
                 )
-
-        print(self.prepare)
 
         if hasattr(self, "prepare"):
             self.prepare(self.reactor, self.clock, self.hs)
