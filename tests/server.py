@@ -11,6 +11,7 @@ from twisted.python.failure import Failure
 from twisted.test.proto_helpers import MemoryReactorClock
 
 from synapse.http.site import SynapseRequest
+from synapse.util import Clock
 
 from tests.utils import setup_test_homeserver as _sth
 
@@ -29,6 +30,12 @@ class FakeChannel(object):
         if not self.result:
             raise Exception("No result yet.")
         return json.loads(self.result["body"])
+
+    @property
+    def code(self):
+        if not self.result:
+            raise Exception("No result yet.")
+        return int(self.result["code"])
 
     def writeHeaders(self, version, code, reason, headers):
         self.result["version"] = version
@@ -196,3 +203,9 @@ def setup_test_homeserver(*args, **kwargs):
     clock.threadpool = ThreadPool()
     pool.threadpool = ThreadPool()
     return d
+
+
+def get_clock():
+    clock = ThreadedMemoryReactorClock()
+    hs_clock = Clock(clock)
+    return (clock, hs_clock)
