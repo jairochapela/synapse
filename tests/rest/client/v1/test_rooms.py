@@ -22,15 +22,11 @@ from six.moves.urllib import parse as urlparse
 
 from twisted.internet import defer
 
-from synapse.rest.client.v1 import room
 from synapse.api.constants import Membership
+from synapse.rest.client.v1 import room
 
 from tests import unittest
-from tests.server import (
-    make_request,
-    setup_test_homeserver,
-)
-
+from tests.server import make_request, setup_test_homeserver
 
 PATH_PREFIX = b"/_matrix/client/api/v1"
 
