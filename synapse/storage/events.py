@@ -1062,7 +1062,7 @@ class EventsStore(EventFederationStore, EventsWorkerStore, BackgroundUpdateStore
                     logger.exception("")
                     raise
 
-                metadata_json = frozendict_json_encoder.encode(
+                metadata_json = encode_json(
                     event.internal_metadata.get_dict()
                 )
 
@@ -1176,7 +1176,7 @@ class EventsStore(EventFederationStore, EventsWorkerStore, BackgroundUpdateStore
                 {
                     "event_id": event.event_id,
                     "room_id": event.room_id,
-                    "internal_metadata": frozendict_json_encoder.encode(
+                    "internal_metadata": encode_json(
                         event.internal_metadata.get_dict()
                     ),
                     "json": encode_json(event_dict(event)),
