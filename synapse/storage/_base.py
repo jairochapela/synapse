@@ -17,7 +17,7 @@ import sys
 import threading
 import time
 
-from six import iteritems, iterkeys, itervalues, PY2
+from six import PY2, iteritems, iterkeys, itervalues
 from six.moves import intern, range
 
 from canonicaljson import json
