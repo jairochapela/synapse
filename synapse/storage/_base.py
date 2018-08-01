@@ -17,7 +17,7 @@ import sys
 import threading
 import time
 
-from six import iteritems, iterkeys, itervalues
+from six import iteritems, iterkeys, itervalues, PY2
 from six.moves import intern, range
 
 from canonicaljson import json
@@ -1228,6 +1228,9 @@ def db_to_json(db_content):
     # cast to bytes to decode
     if isinstance(db_content, memoryview):
         db_content = db_content.tobytes()
+
+    if PY2 and isinstance(db_content, buffer):
+        db_content = bytes(db_content)
 
     if isinstance(db_content, (bytes, bytearray)):
         db_content = db_content.decode('utf8')
