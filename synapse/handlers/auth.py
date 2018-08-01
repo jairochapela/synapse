@@ -888,7 +888,7 @@ class AuthHandler(BaseHandler):
 
             return bcrypt.checkpw(
                 pw.encode('utf8') + self.hs.config.password_pepper.encode("utf8"),
-                stored_hash
+                stored_hash.encode('utf8')
             )
 
         if stored_hash:
