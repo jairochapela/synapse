@@ -48,6 +48,13 @@ sent_queries_counter = Counter("synapse_federation_client_sent_queries", "", ["t
 PDU_RETRY_TIME_MS = 1 * 60 * 1000
 
 
+class InvalidResponseError(RuntimeError):
+    """Helper for _try_destination_list: indicates that the server returned a response
+    we couldn't parse
+    """
+    pass
+
+
 class FederationClient(FederationBase):
     def __init__(self, hs):
         super(FederationClient, self).__init__(hs)
@@ -458,6 +465,62 @@ class FederationClient(FederationBase):
         defer.returnValue(signed_auth)
 
     @defer.inlineCallbacks
+    def _try_destination_list(self, description, destinations, callback):
+        """Try an operation on a series of servers, until it succeeds
+
+        Args:
+            description (unicode): description of the operation we're doing, for logging
+
+            destinations (Iterable[unicode]): list of server_names to try
+
+            callback (callable):  Function to run for each server. Passed a single
+                argument: the server_name to try. May return a deferred.
+
+                If the callback raises a CodeMessageException with a 300/400 code,
+                attempts to perform the operation stop immediately and the exception is
+                reraised.
+
+                Otherwise, if the callback raises an Exception the error is logged and the
+                next server tried. Normally the stacktrace is logged but this is
+                suppressed if the exception is an InvalidResponseError.
+
+        Returns:
+            The [Deferred] result of callback, if it succeeds
+
+        Raises:
+            SynapseError if the chosen remote server returns a 300/400 code.
+
+            RuntimeError if no servers were reachable.
+        """
+        for destination in destinations:
+            if destination == self.server_name:
+                continue
+
+            try:
+                res = yield callback(destination)
+                defer.returnValue(res)
+            except InvalidResponseError as e:
+                logger.warn(
+                    "Failed to %s via %s: %s",
+                    description, destination, e,
+                )
+            except HttpResponseException as e:
+                if not 500 <= e.code < 600:
+                    raise e.to_synapse_error()
+                else:
+                    logger.warn(
+                        "Failed to %s via %s: %i %s",
+                        description, destination, e.code, e.message,
+                    )
+            except Exception:
+                logger.warn(
+                    "Failed to %s via %s",
+                    description, destination, exc_info=1,
+                )
+
+        raise RuntimeError("Failed to %s via any server", description)
+
+    @defer.inlineCallbacks
     def make_membership_event(self, destinations, room_id, user_id, membership,
                               content={},):
         """
@@ -533,28 +596,25 @@ class FederationClient(FederationBase):
                     membership, destination, e.args[0]
                 )
 
-        raise RuntimeError("Failed to send to any server.")
+        return self._try_destination_list(
+            "make_" + membership, destinations, send_request,
+        )
 
     @defer.inlineCallbacks
     def send_join(self, destinations, pdu):
         """Sends a join event to one of a list of homeservers.
-
         Doing so will cause the remote server to add the event to the graph,
         and send the event out to the rest of the federation.
-
         Args:
             destinations (str): Candidate homeservers which are probably
                 participating in the room.
             pdu (BaseEvent): event to be sent
-
         Return:
             Deferred: resolves to a dict with members ``origin`` (a string
             giving the serer the event was sent to, ``state`` (?) and
             ``auth_chain``.
-
             Fails with a ``CodeMessageException`` if the chosen remote server
             returns a 300/400 code.
-
             Fails with a ``RuntimeError`` if no servers were reachable.
         """
 
@@ -630,12 +690,12 @@ class FederationClient(FederationBase):
                 else:
                     logger.exception(
                         "Failed to send_join via %s: %s",
-                        destination, e.args[0]
+                        destination, e.message
                     )
             except Exception as e:
                 logger.exception(
                     "Failed to send_join via %s: %s",
-                    destination, e.args[0]
+                    destination, e.message
                 )
 
         raise RuntimeError("Failed to send to any server.")
@@ -643,12 +703,17 @@ class FederationClient(FederationBase):
     @defer.inlineCallbacks
     def send_invite(self, destination, room_id, event_id, pdu):
         time_now = self._clock.time_msec()
-        code, content = yield self.transport_layer.send_invite(
-            destination=destination,
-            room_id=room_id,
-            event_id=event_id,
-            content=pdu.get_pdu_json(time_now),
-        )
+        try:
+            code, content = yield self.transport_layer.send_invite(
+                destination=destination,
+                room_id=room_id,
+                event_id=event_id,
+                content=pdu.get_pdu_json(time_now),
+            )
+        except HttpResponseException as e:
+            if e.code == 403:
+                raise e.to_synapse_error()
+            raise
 
         pdu_dict = content["event"]
 
@@ -666,23 +731,17 @@ class FederationClient(FederationBase):
     @defer.inlineCallbacks
     def send_leave(self, destinations, pdu):
         """Sends a leave event to one of a list of homeservers.
-
         Doing so will cause the remote server to add the event to the graph,
         and send the event out to the rest of the federation.
-
         This is mostly useful to reject received invites.
-
         Args:
             destinations (str): Candidate homeservers which are probably
                 participating in the room.
             pdu (BaseEvent): event to be sent
-
         Return:
             Deferred: resolves to None.
-
             Fails with a ``CodeMessageException`` if the chosen remote server
             returns a non-200 code.
-
             Fails with a ``RuntimeError`` if no servers were reachable.
         """
         for destination in destinations:
@@ -705,7 +764,7 @@ class FederationClient(FederationBase):
             except Exception as e:
                 logger.exception(
                     "Failed to send_leave via %s: %s",
-                    destination, e.args[0]
+                    destination, e.message
                 )
 
         raise RuntimeError("Failed to send to any server.")
