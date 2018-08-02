@@ -96,8 +96,7 @@ class FederationClient(FederationBase):
     @log_function
     def make_query(self, destination, query_type, args,
                    retry_on_dns_fail=False, ignore_backoff=False):
-        """
-        Sends a federation Query to a remote homeserver of the given type
+        """Sends a federation Query to a remote homeserver of the given type
         and arguments.
 
         Args:
@@ -272,10 +271,10 @@ class FederationClient(FederationBase):
                     event_id, destination, e,
                 )
             except NotRetryingDestination as e:
-                logger.info(e.args[0])
+                logger.info(e.message)
                 continue
             except FederationDeniedError as e:
-                logger.info(e.args[0])
+                logger.info(e.message)
                 continue
             except Exception as e:
                 pdu_attempts[destination] = now
@@ -511,7 +510,7 @@ class FederationClient(FederationBase):
                 else:
                     logger.warn(
                         "Failed to %s via %s: %i %s",
-                        description, destination, e.code, e.args[0],
+                        description, destination, e.code, e.message,
                     )
             except Exception:
                 logger.warn(
@@ -521,7 +520,6 @@ class FederationClient(FederationBase):
 
         raise RuntimeError("Failed to %s via any server", description)
 
-    @defer.inlineCallbacks
     def make_membership_event(self, destinations, room_id, user_id, membership,
                               content={},):
         """
@@ -545,7 +543,7 @@ class FederationClient(FederationBase):
             Deferred: resolves to a tuple of (origin (str), event (object))
             where origin is the remote homeserver which generated the event.
 
-            Fails with a ``CodeMessageException`` if the chosen remote server
+            Fails with a ``SynapseError`` if the chosen remote server
             returns a 300/400 code.
 
             Fails with a ``RuntimeError`` if no servers were reachable.
@@ -556,148 +554,121 @@ class FederationClient(FederationBase):
                 "make_membership_event called with membership='%s', must be one of %s" %
                 (membership, ",".join(valid_memberships))
             )
-        for destination in destinations:
-            if destination == self.server_name:
-                continue
 
-            try:
-                ret = yield self.transport_layer.make_membership_event(
-                    destination, room_id, user_id, membership
-                )
+        @defer.inlineCallbacks
+        def send_request(destination):
+            ret = yield self.transport_layer.make_membership_event(
+                destination, room_id, user_id, membership
+            )
 
-                pdu_dict = ret["event"]
+            pdu_dict = ret["event"]
 
-                logger.debug("Got response to make_%s: %s", membership, pdu_dict)
+            logger.debug("Got response to make_%s: %s", membership, pdu_dict)
 
-                pdu_dict["content"].update(content)
+            pdu_dict["content"].update(content)
 
-                # The protoevent received over the JSON wire may not have all
-                # the required fields. Lets just gloss over that because
-                # there's some we never care about
-                if "prev_state" not in pdu_dict:
-                    pdu_dict["prev_state"] = []
+            # The protoevent received over the JSON wire may not have all
+            # the required fields. Lets just gloss over that because
+            # there's some we never care about
+            if "prev_state" not in pdu_dict:
+                pdu_dict["prev_state"] = []
 
-                ev = builder.EventBuilder(pdu_dict)
+            ev = builder.EventBuilder(pdu_dict)
 
-                defer.returnValue(
-                    (destination, ev)
-                )
-                break
-            except CodeMessageException as e:
-                if not 500 <= e.code < 600:
-                    raise
-                else:
-                    logger.warn(
-                        "Failed to make_%s via %s: %s",
-                        membership, destination, e.args[0]
-                    )
-            except Exception as e:
-                logger.warn(
-                    "Failed to make_%s via %s: %s",
-                    membership, destination, e.args[0]
-                )
+            defer.returnValue(
+                (destination, ev)
+            )
 
-        raise RuntimeError("Failed to send to any server.")
+        return self._try_destination_list(
+            "make_" + membership, destinations, send_request,
+        )
 
-    @defer.inlineCallbacks
     def send_join(self, destinations, pdu):
         """Sends a join event to one of a list of homeservers.
+
         Doing so will cause the remote server to add the event to the graph,
         and send the event out to the rest of the federation.
+
         Args:
             destinations (str): Candidate homeservers which are probably
                 participating in the room.
             pdu (BaseEvent): event to be sent
+
         Return:
             Deferred: resolves to a dict with members ``origin`` (a string
             giving the serer the event was sent to, ``state`` (?) and
             ``auth_chain``.
-            Fails with a ``CodeMessageException`` if the chosen remote server
+
+            Fails with a ``SynapseError`` if the chosen remote server
             returns a 300/400 code.
+
             Fails with a ``RuntimeError`` if no servers were reachable.
         """
 
-        for destination in destinations:
-            if destination == self.server_name:
-                continue
+        @defer.inlineCallbacks
+        def send_request(destination):
+            time_now = self._clock.time_msec()
+            _, content = yield self.transport_layer.send_join(
+                destination=destination,
+                room_id=pdu.room_id,
+                event_id=pdu.event_id,
+                content=pdu.get_pdu_json(time_now),
+            )
 
-            try:
-                time_now = self._clock.time_msec()
-                _, content = yield self.transport_layer.send_join(
-                    destination=destination,
-                    room_id=pdu.room_id,
-                    event_id=pdu.event_id,
-                    content=pdu.get_pdu_json(time_now),
-                )
+            logger.debug("Got content: %s", content)
 
-                logger.debug("Got content: %s", content)
+            state = [
+                event_from_pdu_json(p, outlier=True)
+                for p in content.get("state", [])
+            ]
 
-                state = [
-                    event_from_pdu_json(p, outlier=True)
-                    for p in content.get("state", [])
-                ]
+            auth_chain = [
+                event_from_pdu_json(p, outlier=True)
+                for p in content.get("auth_chain", [])
+            ]
 
-                auth_chain = [
-                    event_from_pdu_json(p, outlier=True)
-                    for p in content.get("auth_chain", [])
-                ]
+            pdus = {
+                p.event_id: p
+                for p in itertools.chain(state, auth_chain)
+            }
 
-                pdus = {
-                    p.event_id: p
-                    for p in itertools.chain(state, auth_chain)
-                }
+            valid_pdus = yield self._check_sigs_and_hash_and_fetch(
+                destination, list(pdus.values()),
+                outlier=True,
+            )
 
-                valid_pdus = yield self._check_sigs_and_hash_and_fetch(
-                    destination, list(pdus.values()),
-                    outlier=True,
-                )
+            valid_pdus_map = {
+                p.event_id: p
+                for p in valid_pdus
+            }
 
-                valid_pdus_map = {
-                    p.event_id: p
-                    for p in valid_pdus
-                }
+            # NB: We *need* to copy to ensure that we don't have multiple
+            # references being passed on, as that causes... issues.
+            signed_state = [
+                copy.copy(valid_pdus_map[p.event_id])
+                for p in state
+                if p.event_id in valid_pdus_map
+            ]
 
-                # NB: We *need* to copy to ensure that we don't have multiple
-                # references being passed on, as that causes... issues.
-                signed_state = [
-                    copy.copy(valid_pdus_map[p.event_id])
-                    for p in state
-                    if p.event_id in valid_pdus_map
-                ]
+            signed_auth = [
+                valid_pdus_map[p.event_id]
+                for p in auth_chain
+                if p.event_id in valid_pdus_map
+            ]
 
-                signed_auth = [
-                    valid_pdus_map[p.event_id]
-                    for p in auth_chain
-                    if p.event_id in valid_pdus_map
-                ]
+            # NB: We *need* to copy to ensure that we don't have multiple
+            # references being passed on, as that causes... issues.
+            for s in signed_state:
+                s.internal_metadata = copy.deepcopy(s.internal_metadata)
 
-                # NB: We *need* to copy to ensure that we don't have multiple
-                # references being passed on, as that causes... issues.
-                for s in signed_state:
-                    s.internal_metadata = copy.deepcopy(s.internal_metadata)
+            auth_chain.sort(key=lambda e: e.depth)
 
-                auth_chain.sort(key=lambda e: e.depth)
-
-                defer.returnValue({
-                    "state": signed_state,
-                    "auth_chain": signed_auth,
-                    "origin": destination,
-                })
-            except CodeMessageException as e:
-                if not 500 <= e.code < 600:
-                    raise
-                else:
-                    logger.exception(
-                        "Failed to send_join via %s: %s",
-                        destination, e.args[0]
-                    )
-            except Exception as e:
-                logger.exception(
-                    "Failed to send_join via %s: %s",
-                    destination, e.args[0]
-                )
-
-        raise RuntimeError("Failed to send to any server.")
+            defer.returnValue({
+                "state": signed_state,
+                "auth_chain": signed_auth,
+                "origin": destination,
+            })
+        return self._try_destination_list("send_join", destinations, send_request)
 
     @defer.inlineCallbacks
     def send_invite(self, destination, room_id, event_id, pdu):
@@ -727,46 +698,41 @@ class FederationClient(FederationBase):
 
         defer.returnValue(pdu)
 
-    @defer.inlineCallbacks
     def send_leave(self, destinations, pdu):
         """Sends a leave event to one of a list of homeservers.
+
         Doing so will cause the remote server to add the event to the graph,
         and send the event out to the rest of the federation.
+
         This is mostly useful to reject received invites.
+
         Args:
             destinations (str): Candidate homeservers which are probably
                 participating in the room.
             pdu (BaseEvent): event to be sent
+
         Return:
             Deferred: resolves to None.
-            Fails with a ``CodeMessageException`` if the chosen remote server
-            returns a non-200 code.
+
+            Fails with a ``SynapseError`` if the chosen remote server
+            returns a 300/400 code.
+
             Fails with a ``RuntimeError`` if no servers were reachable.
         """
-        for destination in destinations:
-            if destination == self.server_name:
-                continue
+        @defer.inlineCallbacks
+        def send_request(destination):
+            time_now = self._clock.time_msec()
+            _, content = yield self.transport_layer.send_leave(
+                destination=destination,
+                room_id=pdu.room_id,
+                event_id=pdu.event_id,
+                content=pdu.get_pdu_json(time_now),
+            )
 
-            try:
-                time_now = self._clock.time_msec()
-                _, content = yield self.transport_layer.send_leave(
-                    destination=destination,
-                    room_id=pdu.room_id,
-                    event_id=pdu.event_id,
-                    content=pdu.get_pdu_json(time_now),
-                )
+            logger.debug("Got content: %s", content)
+            defer.returnValue(None)
 
-                logger.debug("Got content: %s", content)
-                defer.returnValue(None)
-            except CodeMessageException:
-                raise
-            except Exception as e:
-                logger.exception(
-                    "Failed to send_leave via %s: %s",
-                    destination, e.message
-                )
-
-        raise RuntimeError("Failed to send to any server.")
+        return self._try_destination_list("send_leave", destinations, send_request)
 
     def get_public_rooms(self, destination, limit=None, since_token=None,
                          search_filter=None, include_all_networks=False,
@@ -885,7 +851,7 @@ class FederationClient(FederationBase):
             except Exception as e:
                 logger.exception(
                     "Failed to send_third_party_invite via %s: %s",
-                    destination, e.args[0]
+                    destination, e.message
                 )
 
         raise RuntimeError("Failed to send to any server.")
