@@ -1,4 +1,3 @@
-import json
 import re
 
 from twisted.internet.defer import Deferred
