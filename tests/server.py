@@ -29,7 +29,7 @@ class FakeChannel(object):
     def json_body(self):
         if not self.result:
             raise Exception("No result yet.")
-        return json.loads(self.result["body"])
+        return json.loads(self.result["body"].decode('utf8'))
 
     @property
     def code(self):
