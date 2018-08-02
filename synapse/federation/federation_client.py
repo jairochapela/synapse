@@ -511,7 +511,7 @@ class FederationClient(FederationBase):
                 else:
                     logger.warn(
                         "Failed to %s via %s: %i %s",
-                        description, destination, e.code, e.message,
+                        description, destination, e.code, e.args[0],
                     )
             except Exception:
                 logger.warn(
@@ -597,9 +597,7 @@ class FederationClient(FederationBase):
                     membership, destination, e.args[0]
                 )
 
-        return self._try_destination_list(
-            "make_" + membership, destinations, send_request,
-        )
+        raise RuntimeError("Failed to send to any server.")
 
     @defer.inlineCallbacks
     def send_join(self, destinations, pdu):
@@ -691,12 +689,12 @@ class FederationClient(FederationBase):
                 else:
                     logger.exception(
                         "Failed to send_join via %s: %s",
-                        destination, e.message
+                        destination, e.args[0]
                     )
             except Exception as e:
                 logger.exception(
                     "Failed to send_join via %s: %s",
-                    destination, e.message
+                    destination, e.args[0]
                 )
 
         raise RuntimeError("Failed to send to any server.")
