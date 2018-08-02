@@ -17,8 +17,6 @@
 """ This is a reference implementation of a Matrix home server.
 """
 
-__version__ = "0.33.0"
-
 try:
     from twisted.internet import protocol
     from twisted.internet.protocol import Factory
@@ -28,3 +26,5 @@ try:
     DNSDatagramProtocol.noisy = False
 except ImportError:
     pass
+
+__version__ = "0.33.1"
