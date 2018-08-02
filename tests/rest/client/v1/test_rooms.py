@@ -195,7 +195,7 @@ class RoomPermissionsTestCase(RoomBase):
         request, channel = make_request("GET", topic_path)
         self.render(request)
         self.assertEquals(200, channel.code, msg=channel.result["body"])
-        self.assert_dict(json.loads(topic_content), channel.json_body)
+        self.assert_dict(json.loads(topic_content.decode('utf8')), channel.json_body)
 
         # set/get topic in created PRIVATE room and left, expect 403
         self.helper.leave(room=self.created_rmid, user=self.user_id)
@@ -678,49 +678,49 @@ class RoomMessagesTestCase(RoomBase):
     def test_invalid_puts(self):
         path = "/rooms/%s/send/m.room.message/mid1" % (urlparse.quote(self.room_id))
         # missing keys or invalid json
-        request, channel = make_request("PUT", path, '{}')
+        request, channel = make_request("PUT", path, b'{}')
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
-        request, channel = make_request("PUT", path, '{"_name":"bo"}')
+        request, channel = make_request("PUT", path, b'{"_name":"bo"}')
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
-        request, channel = make_request("PUT", path, '{"nao')
+        request, channel = make_request("PUT", path, b'{"nao')
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
         request, channel = make_request(
-            "PUT", path, '[{"_name":"bo"},{"_name":"jill"}]'
+            "PUT", path, b'[{"_name":"bo"},{"_name":"jill"}]'
         )
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
-        request, channel = make_request("PUT", path, 'text only')
+        request, channel = make_request("PUT", path, b'text only')
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
-        request, channel = make_request("PUT", path, '')
+        request, channel = make_request("PUT", path, b'')
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
     def test_rooms_messages_sent(self):
         path = "/rooms/%s/send/m.room.message/mid1" % (urlparse.quote(self.room_id))
 
-        content = '{"body":"test","msgtype":{"type":"a"}}'
+        content = b'{"body":"test","msgtype":{"type":"a"}}'
         request, channel = make_request("PUT", path, content)
         self.render(request)
         self.assertEquals(400, channel.code, msg=channel.result["body"])
 
         # custom message types
-        content = '{"body":"test","msgtype":"test.custom.text"}'
+        content = b'{"body":"test","msgtype":"test.custom.text"}'
         request, channel = make_request("PUT", path, content)
         self.render(request)
         self.assertEquals(200, channel.code, msg=channel.result["body"])
 
         # m.text message type
         path = "/rooms/%s/send/m.room.message/mid2" % (urlparse.quote(self.room_id))
-        content = '{"body":"test2","msgtype":"m.text"}'
+        content = b'{"body":"test2","msgtype":"m.text"}'
         request, channel = make_request("PUT", path, content)
         self.render(request)
         self.assertEquals(200, channel.code, msg=channel.result["body"])

@@ -101,7 +101,7 @@ class UserRegisterServlet(ClientV1RestServlet):
 
         nonce = self.hs.get_secrets().token_hex(64)
         self.nonces[nonce] = int(self.reactor.seconds())
-        return (200, {"nonce": nonce.encode('ascii')})
+        return (200, {"nonce": nonce})
 
     @defer.inlineCallbacks
     def on_POST(self, request):
