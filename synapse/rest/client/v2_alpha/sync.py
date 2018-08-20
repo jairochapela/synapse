@@ -88,7 +88,7 @@ class SyncRestServlet(RestServlet):
 
     @defer.inlineCallbacks
     def on_GET(self, request):
-        if "from" in request.args:
+        if b"from" in request.args:
             # /events used to use 'from', but /sync uses 'since'.
             # Lets be helpful and whine if we see a 'from'.
             raise SynapseError(
@@ -120,7 +120,7 @@ class SyncRestServlet(RestServlet):
         request_key = (user, timeout, since, filter_id, full_state, device_id)
 
         if filter_id:
-            if filter_id.startswith('{'):
+            if filter_id.startswith(u'{'):
                 try:
                     filter_object = json.loads(filter_id)
                     set_timeline_upper_limit(filter_object,
