@@ -36,12 +36,13 @@ from synapse.api.errors import (
 )
 from synapse.http.matrixfederationclient import MatrixFederationHttpClient
 from synapse.metrics.background_process_metrics import run_as_background_process
-from synapse.util.async import Linearizer
+from synapse.util.async_helpers import Linearizer
 from synapse.util.logcontext import make_deferred_yieldable
 from synapse.util.retryutils import NotRetryingDestination
 from synapse.util.stringutils import is_ascii, random_string
 
 from ._base import FileInfo, respond_404, respond_with_responder
+from .config_resource import MediaConfigResource
 from .download_resource import DownloadResource
 from .filepath import MediaFilePaths
 from .identicon_resource import IdenticonResource
@@ -769,3 +770,4 @@ class MediaRepositoryResource(Resource):
             self.putChild(b"preview_url", PreviewUrlResource(
                 hs, media_repo, media_repo.media_storage,
             ))
+        self.putChild(b"config", MediaConfigResource(hs))

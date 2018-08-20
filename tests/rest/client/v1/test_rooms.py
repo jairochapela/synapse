@@ -39,6 +39,7 @@ class RoomBase(unittest.HomeserverTestCase):
     def make_homeserver(self, reactor, clock, hs_args):
 
         self.hs = setup_test_homeserver(
+            self.addCleanup,
             "red",
             http_client=None,
             federation_client=Mock(),

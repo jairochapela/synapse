@@ -24,7 +24,6 @@ from synapse.rest.client.v1 import room
 from synapse.types import UserID
 
 from tests import unittest
-from tests.server import make_request, setup_test_homeserver
 
 PATH_PREFIX = "/_matrix/client/api/v1"
 
@@ -37,14 +36,13 @@ class RoomTypingTestCase(unittest.HomeserverTestCase):
     user = UserID.from_string(user_id)
     servlets = [room.register_servlets]
 
-    def make_homeserver(self, reactor, clock, hs_args):
+    def make_homeserver(self, reactor, clock):
 
-        hs = setup_test_homeserver(
+        hs = self.setup_test_homeserver(
             "red",
             http_client=None,
             federation_client=Mock(),
             ratelimiter=NonCallableMock(spec_set=["send_message"]),
-            **hs_args
         )
 
         self.event_source = hs.get_event_sources().sources["typing"]
@@ -102,7 +100,7 @@ class RoomTypingTestCase(unittest.HomeserverTestCase):
         self.helper.join(self.room_id, user="@jim:red")
 
     def test_set_typing(self):
-        request, channel = make_request(
+        request, channel = self.make_request(
             "PUT",
             "/rooms/%s/typing/%s" % (self.room_id, self.user_id),
             b'{"typing": true, "timeout": 30000}',
@@ -124,7 +122,7 @@ class RoomTypingTestCase(unittest.HomeserverTestCase):
         )
 
     def test_set_not_typing(self):
-        request, channel = make_request(
+        request, channel = self.make_request(
             "PUT",
             "/rooms/%s/typing/%s" % (self.room_id, self.user_id),
             b'{"typing": false}',
@@ -133,7 +131,7 @@ class RoomTypingTestCase(unittest.HomeserverTestCase):
         self.assertEquals(200, channel.code)
 
     def test_typing_timeout(self):
-        request, channel = make_request(
+        request, channel = self.make_request(
             "PUT",
             "/rooms/%s/typing/%s" % (self.room_id, self.user_id),
             b'{"typing": true, "timeout": 30000}',
@@ -147,7 +145,7 @@ class RoomTypingTestCase(unittest.HomeserverTestCase):
 
         self.assertEquals(self.event_source.get_current_key(), 2)
 
-        request, channel = make_request(
+        request, channel = self.make_request(
             "PUT",
             "/rooms/%s/typing/%s" % (self.room_id, self.user_id),
             b'{"typing": true, "timeout": 30000}',
