@@ -79,9 +79,7 @@ class RoomPermissionsTestCase(RoomBase):
             "rooms/%s/send/m.room.message/a1" % (self.created_rmid)
         ).encode('ascii')
         request, channel = self.make_request(
-            "PUT",
-            self.created_rmid_msg_path,
-            b'{"msgtype":"m.text","body":"test msg"}',
+            "PUT", self.created_rmid_msg_path, b'{"msgtype":"m.text","body":"test msg"}'
         )
         self.render(request)
         self.assertEquals(200, channel.code, channel.result)
@@ -458,7 +456,9 @@ class RoomsCreateTestCase(RoomBase):
 
     def test_post_room_custom_key(self):
         # POST with custom config keys, expect new room id
-        request, channel = self.make_request("POST", "/createRoom", b'{"custom":"stuff"}')
+        request, channel = self.make_request(
+            "POST", "/createRoom", b'{"custom":"stuff"}'
+        )
         self.render(request)
         self.assertEquals(200, channel.code)
         self.assertTrue("room_id" in channel.json_body)
@@ -734,7 +734,9 @@ class RoomInitialSyncTestCase(RoomBase):
         self.room_id = self.helper.create_room_as(self.user_id)
 
     def test_initial_sync(self):
-        request, channel = self.make_request("GET", "/rooms/%s/initialSync" % self.room_id)
+        request, channel = self.make_request(
+            "GET", "/rooms/%s/initialSync" % self.room_id
+        )
         self.render(request)
         self.assertEquals(200, channel.code)
 

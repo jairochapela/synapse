@@ -43,9 +43,9 @@ def _expect_edu(destination, edu_type, content, origin="test"):
 
 
 def _make_edu_json(origin, edu_type, content):
-    return json.dumps(
-        _expect_edu("test", edu_type, content, origin=origin)
-    ).encode('utf8')
+    return json.dumps(_expect_edu("test", edu_type, content, origin=origin)).encode(
+        'utf8'
+    )
 
 
 class TypingNotificationsTestCase(unittest.TestCase):

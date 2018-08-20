@@ -93,8 +93,13 @@ def setupdb():
 
 @defer.inlineCallbacks
 def setup_test_homeserver(
-    cleanup_func, name="test", datastore=None, config=None, reactor=None,
-    homeserverToUse=HomeServer, **kargs
+    cleanup_func,
+    name="test",
+    datastore=None,
+    config=None,
+    reactor=None,
+    homeserverToUse=HomeServer,
+    **kargs
 ):
     """
     Setup a homeserver suitable for running tests against.  Keyword arguments
