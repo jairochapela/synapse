@@ -120,7 +120,7 @@ class SyncRestServlet(RestServlet):
         request_key = (user, timeout, since, filter_id, full_state, device_id)
 
         if filter_id:
-            if filter_id.startswith(u'{'):
+            if filter_id.startswith('{'):
                 try:
                     filter_object = json.loads(filter_id)
                     set_timeline_upper_limit(filter_object,

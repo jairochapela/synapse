@@ -22,6 +22,7 @@ from synapse.util.caches.stream_change_cache import StreamChangeCache
 from ._base import BaseSlavedStore
 from ._slaved_id_tracker import SlavedIdTracker
 
+
 def __func__(inp):
     if six.PY3:
         return inp
