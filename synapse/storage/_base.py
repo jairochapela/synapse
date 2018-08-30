@@ -1221,31 +1221,28 @@ class _RollbackButIsFineException(Exception):
 
 def db_to_json(db_content):
     """
-    Take some data from a database row and return JSON.
+    Take some data from a database row and return a JSON-decoded object.
+
+    Args:
+        db_content (memoryview|buffer|bytes|bytearray|unicode)
     """
     # psycopg2 on Python 3 returns memoryview objects, which we need to
     # cast to bytes to decode
     if isinstance(db_content, memoryview):
         db_content = db_content.tobytes()
 
+    # psycopg2 on Python 2 returns buffer objects, which we need to cast to
+    # bytes to decode
     if PY2 and isinstance(db_content, buffer):
         db_content = bytes(db_content)
 
+    # Decode it to a Unicode string before feeding it to json.loads, so we
+    # consistenty get a Unicode-containing object out.
     if isinstance(db_content, (bytes, bytearray)):
         db_content = db_content.decode('utf8')
 
     try:
         return json.loads(db_content)
     except Exception:
-
-        try:
-            if db_content.startswith("\\x7b"):
-                logging.warning("Detecting mangled JSON, trying to unmangle...")
-                import binascii
-                db_content_n = "{" + binascii.unhexlify(db_content[4:]).decode('utf8')
-                return json.loads(db_content_n)
-        except Exception:
-            logging.warning("Failed to unmangle")
-
         logging.warning("Tried to decode '%r' as JSON and failed", db_content)
         raise
