@@ -22,7 +22,7 @@ from six import PY3, string_types
 from six.moves import urllib
 
 import treq
-from canonicaljson import encode_canonical_json, json
+from canonicaljson import encode_canonical_json
 from prometheus_client import Counter
 from signedjson.sign import sign_json
 from zope.interface import implementer
@@ -30,7 +30,7 @@ from zope.interface import implementer
 from twisted.internet import defer, protocol, reactor
 from twisted.internet.error import DNSLookupError
 from twisted.web._newclient import ResponseDone
-from twisted.web.client import Agent, HTTPConnectionPool, readBody
+from twisted.web.client import Agent, HTTPConnectionPool
 from twisted.web.http_headers import Headers
 from twisted.web.iweb import IBodyProducer
 
@@ -110,7 +110,7 @@ class MatrixFederationHttpClient(object):
 
     @defer.inlineCallbacks
     def _request(self, destination, method, path,
-                 body_callback, headers_dict={}, param_bytes=b"",
+                 data=None, json=None, headers_dict={}, param_bytes=b"",
                  query_bytes=b"", retry_on_dns_fail=True,
                  timeout=None, long_retries=False,
                  ignore_backoff=False,
@@ -153,14 +153,14 @@ class MatrixFederationHttpClient(object):
             ignore_backoff=ignore_backoff,
         )
 
-        destination = destination.encode("ascii")
+        destination_bytes = destination.encode("ascii")
         path_bytes = path.encode("ascii")
         with limiter:
             headers_dict[b"User-Agent"] = [self.version_string]
-            headers_dict[b"Host"] = [destination]
+            headers_dict[b"Host"] = [destination_bytes]
 
             url = self._create_url(
-                destination, path_bytes, param_bytes, query_bytes
+                destination_bytes, path_bytes, param_bytes, query_bytes
             ).decode('ascii')
 
             txn_id = "%s-O-%s" % (method, self._next_id)
@@ -184,17 +184,19 @@ class MatrixFederationHttpClient(object):
 
             log_result = None
             try:
-                while True:
-                    producer = None
-                    if body_callback:
-                        producer = body_callback(method, http_url, headers_dict)
+                if json:
+                    data = encode_canonical_json(json)
+                    self.sign_request(destination, method, http_url, headers_dict, json)
+                else:
+                    self.sign_request(destination, method, http_url, headers_dict)
 
+                while True:
                     try:
                         request_deferred = treq.request(
                             method,
                             url,
                             headers=Headers(headers_dict),
-                            data=producer,
+                            data=data,
                             agent=self.agent,
                         )
                         add_timeout_to_deferred(
@@ -260,7 +262,7 @@ class MatrixFederationHttpClient(object):
                 # :'(
                 # Update transactions table?
                 with logcontext.PreserveLoggingContext():
-                    body = yield readBody(response)
+                    body = yield treq.content(response)
                 raise HttpResponseException(
                     response.code, response.phrase, body
                 )
@@ -355,22 +357,15 @@ class MatrixFederationHttpClient(object):
         """
 
         if not json_data_callback:
-            def json_data_callback():
-                return data
-
-        def body_callback(method, url_bytes, headers_dict):
+            json_data = data
+        else:
             json_data = json_data_callback()
-            self.sign_request(
-                destination, method, url_bytes, headers_dict, json_data
-            )
-            producer = _JsonProducer(json_data)
-            return producer
 
         response = yield self._request(
             destination,
             "PUT",
             path,
-            body_callback=body_callback,
+            json=json_data,
             headers_dict={"Content-Type": ["application/json"]},
             query_bytes=encode_query_args(args),
             long_retries=long_retries,
@@ -384,8 +379,8 @@ class MatrixFederationHttpClient(object):
             check_content_type_is_json(response.headers)
 
         with logcontext.PreserveLoggingContext():
-            body = yield readBody(response)
-        defer.returnValue(json.loads(body))
+            body = yield treq.json_content(response)
+        defer.returnValue(body)
 
     @defer.inlineCallbacks
     def post_json(self, destination, path, data={}, long_retries=False,
@@ -418,19 +413,12 @@ class MatrixFederationHttpClient(object):
             Fails with ``FederationDeniedError`` if this destination
             is not on our federation whitelist
         """
-
-        def body_callback(method, url_bytes, headers_dict):
-            self.sign_request(
-                destination, method, url_bytes, headers_dict, data
-            )
-            return _JsonProducer(data)
-
         response = yield self._request(
             destination,
             "POST",
             path,
             query_bytes=encode_query_args(args),
-            body_callback=body_callback,
+            json=data,
             headers_dict={"Content-Type": ["application/json"]},
             long_retries=long_retries,
             timeout=timeout,
@@ -442,9 +430,9 @@ class MatrixFederationHttpClient(object):
             check_content_type_is_json(response.headers)
 
         with logcontext.PreserveLoggingContext():
-            body = yield readBody(response)
+            body = yield treq.json_content(response)
 
-        defer.returnValue(json.loads(body))
+        defer.returnValue(body)
 
     @defer.inlineCallbacks
     def get_json(self, destination, path, args=None, retry_on_dns_fail=True,
@@ -479,16 +467,11 @@ class MatrixFederationHttpClient(object):
 
         logger.debug("Query bytes: %s Retry DNS: %s", args, retry_on_dns_fail)
 
-        def body_callback(method, url_bytes, headers_dict):
-            self.sign_request(destination, method, url_bytes, headers_dict)
-            return None
-
         response = yield self._request(
             destination,
             "GET",
             path,
             query_bytes=encode_query_args(args),
-            body_callback=body_callback,
             retry_on_dns_fail=retry_on_dns_fail,
             timeout=timeout,
             ignore_backoff=ignore_backoff,
@@ -499,9 +482,9 @@ class MatrixFederationHttpClient(object):
             check_content_type_is_json(response.headers)
 
         with logcontext.PreserveLoggingContext():
-            body = yield readBody(response)
+            body = yield treq.json_content(response)
 
-        defer.returnValue(json.loads(body))
+        defer.returnValue(body)
 
     @defer.inlineCallbacks
     def delete_json(self, destination, path, long_retries=False,
@@ -531,7 +514,6 @@ class MatrixFederationHttpClient(object):
             Fails with ``FederationDeniedError`` if this destination
             is not on our federation whitelist
         """
-
         response = yield self._request(
             destination,
             "DELETE",
@@ -548,9 +530,9 @@ class MatrixFederationHttpClient(object):
             check_content_type_is_json(response.headers)
 
         with logcontext.PreserveLoggingContext():
-            body = yield readBody(response)
+            body = yield treq.json_content(response)
 
-        defer.returnValue(json.loads(body))
+        defer.returnValue(body)
 
     @defer.inlineCallbacks
     def get_file(self, destination, path, output_stream, args={},
@@ -587,16 +569,11 @@ class MatrixFederationHttpClient(object):
         query_bytes = urllib.parse.urlencode(encoded_args, True).encode('utf8')
         logger.debug("Query bytes: %s Retry DNS: %s", query_bytes, retry_on_dns_fail)
 
-        def body_callback(method, url_bytes, headers_dict):
-            self.sign_request(destination, method, url_bytes, headers_dict)
-            return None
-
         response = yield self._request(
             destination,
             "GET",
             path,
             query_bytes=query_bytes,
-            body_callback=body_callback,
             retry_on_dns_fail=retry_on_dns_fail,
             ignore_backoff=ignore_backoff,
         )
@@ -645,31 +622,6 @@ def _readBodyToFile(response, stream, max_size):
     d = defer.Deferred()
     response.deliverBody(_ReadBodyToFileProtocol(stream, d, max_size))
     return d
-
-
-@implementer(IBodyProducer)
-class _JsonProducer(object):
-    """ Used by the twisted http client to create the HTTP body from json
-    """
-    def __init__(self, jsn):
-        self.reset(jsn)
-
-    def reset(self, jsn):
-        self.body = encode_canonical_json(jsn)
-        self.length = len(self.body)
-
-    def startProducing(self, consumer):
-        consumer.write(self.body)
-        return defer.succeed(None)
-
-    def pauseProducing(self):
-        pass
-
-    def stopProducing(self):
-        pass
-
-    def resumeProducing(self):
-        pass
 
 
 def _flatten_response_never_received(e):
