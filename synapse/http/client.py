@@ -349,7 +349,7 @@ class SimpleHttpClient(object):
         resp_headers = dict(response.headers.getAllRawHeaders())
 
         if (b'Content-Length' in resp_headers and
-            int(resp_headers[b'Content-Length']) > max_size):
+                int(resp_headers[b'Content-Length']) > max_size):
             logger.warn("Requested URL is too large > %r bytes" % (self.max_size,))
             raise SynapseError(
                 502,
