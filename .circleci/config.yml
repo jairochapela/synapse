@@ -18,6 +18,7 @@ jobs:
       - store_artifacts:
           path: ~/project/logs
           destination: logs
+
   sytestpy3:
     machine: true
     steps:
