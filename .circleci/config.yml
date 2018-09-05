@@ -43,6 +43,5 @@ workflows:
     jobs:
       - sytestpy2
       - sytestpy2postgres
-# Currently broken while the Python 3 port is incomplete
-#      - sytestpy3
-#      - sytestpy3postgres
+      - sytestpy3
+      - sytestpy3postgres

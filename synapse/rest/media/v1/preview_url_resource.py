@@ -301,7 +301,7 @@ class PreviewUrlResource(Resource):
                 logger.warn("Error downloading %s: %r", url, e)
                 raise SynapseError(
                     500, "Failed to download content: %s" % (
-                        traceback.format_exception_only(sys.exc_type, e),
+                        traceback.format_exception_only(sys.exc_info()[0], e),
                     ),
                     Codes.UNKNOWN,
                 )

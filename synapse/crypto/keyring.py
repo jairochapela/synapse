@@ -514,7 +514,7 @@ class Keyring(object):
 
             (response, tls_certificate) = yield fetch_server_key(
                 server_name, self.hs.tls_client_options_factory,
-                path=(b"/_matrix/key/v2/server/%s" % (
+                path=("/_matrix/key/v2/server/%s" % (
                     urllib.parse.quote(requested_key_id),
                 )).encode("ascii"),
             )

@@ -630,14 +630,14 @@ class OpenIdUserInfo(BaseFederationServlet):
 
     @defer.inlineCallbacks
     def on_GET(self, origin, content, query):
-        token = query.get("access_token", [None])[0]
+        token = query.get(b"access_token", [None])[0]
         if token is None:
             defer.returnValue((401, {
                 "errcode": "M_MISSING_TOKEN", "error": "Access Token required"
             }))
             return
 
-        user_id = yield self.handler.on_openid_userinfo(token)
+        user_id = yield self.handler.on_openid_userinfo(token.decode('ascii'))
 
         if user_id is None:
             defer.returnValue((401, {

@@ -564,7 +564,7 @@ class RoomEventContextServlet(ClientV1RestServlet):
         # picking the API shape for symmetry with /messages
         filter_bytes = parse_string(request, "filter")
         if filter_bytes:
-            filter_json = urlparse.unquote(filter_bytes).decode("UTF-8")
+            filter_json = urlparse.unquote(filter_bytes)
             event_filter = Filter(json.loads(filter_json))
         else:
             event_filter = None
