@@ -108,16 +108,22 @@ class MatrixFederationHttpClient(object):
 
     @defer.inlineCallbacks
     def _request(self, destination, method, path,
-                 data=None, json=None, headers_dict={}, param_bytes=b"",
-                 query_bytes=b"", retry_on_dns_fail=True,
+                 json=None, json_callback=None,
+                 param_bytes=b"",
+                 query=None, retry_on_dns_fail=True,
                  timeout=None, long_retries=False,
                  ignore_backoff=False,
                  backoff_on_404=False):
-        """ Creates and sends a request to the given server
+        """
+        Creates and sends a request to the given server.
+
         Args:
             destination (str): The remote server to send the HTTP request to.
             method (str): HTTP method
             path (str): The HTTP path
+            json (dict or None): JSON to send in the body.
+            json_callback (func or None): A callback to generate the JSON.
+            query (dict or None): Query arguments.
             ignore_backoff (bool): true to ignore the historical backoff data
                 and try the request anyway.
             backoff_on_404 (bool): Back off if we get a 404
@@ -151,14 +157,21 @@ class MatrixFederationHttpClient(object):
             ignore_backoff=ignore_backoff,
         )
 
-        destination_bytes = destination.encode("ascii")
+        headers_dict = {}
         path_bytes = path.encode("ascii")
-        with limiter:
-            headers_dict[b"User-Agent"] = [self.version_string]
-            headers_dict[b"Host"] = [destination_bytes]
+        if query:
+            query_bytes = encode_query_args(query)
+        else:
+            query_bytes = b""
 
+        headers_dict = {
+            "User-Agent": [self.version_string],
+            "Host": [destination],
+        }
+
+        with limiter:
             url = self._create_url(
-                destination_bytes, path_bytes, param_bytes, query_bytes
+                destination.encode("ascii"), path_bytes, param_bytes, query_bytes
             ).decode('ascii')
 
             txn_id = "%s-O-%s" % (method, self._next_id)
@@ -182,14 +195,21 @@ class MatrixFederationHttpClient(object):
 
             log_result = None
             try:
-                if json:
-                    data = encode_canonical_json(json)
-                    self.sign_request(destination, method, http_url, headers_dict, json)
-                else:
-                    self.sign_request(destination, method, http_url, headers_dict)
-
                 while True:
                     try:
+                        if json_callback:
+                            json = json_callback()
+
+                        if json:
+                            data = encode_canonical_json(json)
+                            headers_dict["Content-Type"] = ["application/json"]
+                            self.sign_request(
+                                destination, method, http_url, headers_dict, json
+                            )
+                        else:
+                            data = None
+                            self.sign_request(destination, method, http_url, headers_dict)
+
                         request_deferred = treq.request(
                             method,
                             url,
@@ -355,17 +375,14 @@ class MatrixFederationHttpClient(object):
         """
 
         if not json_data_callback:
-            json_data = data
-        else:
-            json_data = json_data_callback()
+            json_data_callback = lambda: data
 
         response = yield self._request(
             destination,
             "PUT",
             path,
-            json=json_data,
-            headers_dict={"Content-Type": ["application/json"]},
-            query_bytes=encode_query_args(args),
+            json_callback=json_data_callback,
+            query=args,
             long_retries=long_retries,
             timeout=timeout,
             ignore_backoff=ignore_backoff,
@@ -415,9 +432,8 @@ class MatrixFederationHttpClient(object):
             destination,
             "POST",
             path,
-            query_bytes=encode_query_args(args),
+            query=args,
             json=data,
-            headers_dict={"Content-Type": ["application/json"]},
             long_retries=long_retries,
             timeout=timeout,
             ignore_backoff=ignore_backoff,
@@ -469,7 +485,7 @@ class MatrixFederationHttpClient(object):
             destination,
             "GET",
             path,
-            query_bytes=encode_query_args(args),
+            query=args,
             retry_on_dns_fail=retry_on_dns_fail,
             timeout=timeout,
             ignore_backoff=ignore_backoff,
@@ -516,8 +532,7 @@ class MatrixFederationHttpClient(object):
             destination,
             "DELETE",
             path,
-            query_bytes=encode_query_args(args),
-            headers_dict={"Content-Type": ["application/json"]},
+            query=args,
             long_retries=long_retries,
             timeout=timeout,
             ignore_backoff=ignore_backoff,
@@ -557,21 +572,11 @@ class MatrixFederationHttpClient(object):
             Fails with ``FederationDeniedError`` if this destination
             is not on our federation whitelist
         """
-
-        encoded_args = {}
-        for k, vs in args.items():
-            if isinstance(vs, string_types):
-                vs = [vs]
-            encoded_args[k] = [v.encode("UTF-8") for v in vs]
-
-        query_bytes = urllib.parse.urlencode(encoded_args, True).encode('utf8')
-        logger.debug("Query bytes: %s Retry DNS: %s", query_bytes, retry_on_dns_fail)
-
         response = yield self._request(
             destination,
             "GET",
             path,
-            query_bytes=query_bytes,
+            query=args,
             retry_on_dns_fail=retry_on_dns_fail,
             ignore_backoff=ignore_backoff,
         )
